@@ -68,6 +68,9 @@ export const metadata: Metadata = {
     languages: { 'en': 'https://bcryptgenerator.org' },
   },
   category: 'technology',
+  verification: {
+    google: '4zYq5s4U-pnMEvSgAhBrlGx0Rsdt7LR7Ds_CXvdCWQk',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
