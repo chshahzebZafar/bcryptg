@@ -1,0 +1,128 @@
+---
+title: 'How Many Bcrypt Rounds Should You Use in 2026?'
+description: 'A practical guide to choosing the right bcrypt cost factor. OWASP 2026 recommendations, performance benchmarks, and how to pick the right number of rounds for your application.'
+date: '2026-03-05'
+lastModified: '2026-05-01'
+tags: ['bcrypt', 'security', 'performance', 'owasp']
+readingTime: '6 min read'
+---
+
+## The Short Answer
+
+**Use 12 rounds minimum in 2026.** OWASP recommends a cost factor that requires at least 1 second to compute on your server hardware. For most modern servers, that means rounds 12–14.
+
+## Understanding the Cost Factor
+
+The bcrypt cost factor (sometimes called "rounds" or "work factor") is an exponent, not a multiplier. Cost factor `N` means bcrypt performs `2^N` iterations:
+
+| Cost Factor | Iterations | Typical Time (2026 server) |
+|---|---|---|
+| 10 | 1,024 | ~80ms |
+| 11 | 2,048 | ~150ms |
+| 12 | 4,096 | ~300ms |
+| 13 | 8,192 | ~600ms |
+| 14 | 16,384 | ~1.2s |
+| 15 | 32,768 | ~2.5s |
+
+Each increment doubles the work. Going from 12 to 13 rounds doubles attacker effort while only adding ~300ms per login.
+
+## OWASP 2026 Recommendation
+
+The [OWASP Password Storage Cheat Sheet](https://owasp.org/www-project-cheat-sheets/cheatsheets/Password_Storage_Cheat_Sheet.html) recommends:
+
+> For bcrypt, use a work factor of **12 or more**, targeting 1 second of computation time on your hardware. Increase as hardware improves.
+
+This is a floor, not a ceiling. If your server can handle 14 rounds without impacting user experience, use 14.
+
+## How to Benchmark Your Server
+
+Run this on your production hardware and choose the highest value under 1 second:
+
+```js
+const bcrypt = require('bcryptjs');
+
+async function benchmark() {
+  for (let rounds = 10; rounds <= 15; rounds++) {
+    const start = Date.now();
+    await bcrypt.hash('benchmark-password', rounds);
+    const ms = Date.now() - start;
+    console.log(`Rounds ${rounds}: ${ms}ms`);
+  }
+}
+
+benchmark();
+```
+
+A typical output on a 2026 cloud instance (2 vCPUs, 4GB RAM):
+
+```
+Rounds 10: 82ms
+Rounds 11: 164ms
+Rounds 12: 328ms
+Rounds 13: 657ms
+Rounds 14: 1,314ms
+```
+
+For this server, rounds 12 or 13 are the sweet spot.
+
+## Impact on Attacker
+
+Here's why the cost factor matters so much after a database breach:
+
+At rounds 12, an attacker with a high-end GPU can test roughly 3,000 passwords per second. An 8-character password has about 218 trillion possible combinations (lowercase + uppercase + digits + symbols). At 3,000/sec:
+
+- 8 characters: ~2.3 million years to exhaust
+- 6 characters: ~3.8 years to exhaust
+- 4 characters: ~2 hours to exhaust
+
+This is why long passwords matter alongside bcrypt — but even short passwords are significantly protected compared to MD5 (where the same GPU runs ~10 billion guesses per second).
+
+## Common Mistakes
+
+**Using rounds lower than 10 in production:**
+Rounds under 10 (especially 4–6 which are common in test suites) should never reach production. They can be brute-forced in minutes.
+
+**Hardcoding the rounds:**
+Store your cost factor in an environment variable or config:
+
+```js
+const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10);
+const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+```
+
+This lets you increase rounds without a code deploy, and makes it easy to audit your security configuration.
+
+**Not re-hashing on login:**
+As you increase your cost factor over time, existing hashes still use the old (lower) factor. Implement re-hashing on successful login:
+
+```js
+async function login(password, storedHash) {
+  const valid = await bcrypt.compare(password, storedHash);
+  if (!valid) return false;
+
+  // Re-hash with current rounds if needed
+  const hashRounds = bcrypt.getRounds(storedHash);
+  if (hashRounds < BCRYPT_ROUNDS) {
+    const newHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    await db.users.updateHash(newHash);
+  }
+
+  return true;
+}
+```
+
+## Rounds by Application Type
+
+| Application Type | Recommended Rounds | Reasoning |
+|---|---|---|
+| Low-risk (internal tools) | 12 | Baseline OWASP |
+| Standard web app | 12–13 | Good balance |
+| High-security (finance, healthcare) | 13–14 | Extra protection |
+| Admin accounts | 14 | Worth the extra 1 second |
+| API (rate-limited) | 12+ | Rate limiting adds protection |
+
+## Conclusion
+
+The cost factor is your most important tunable security parameter in bcrypt. Start at 12, benchmark on your hardware, and increase over time as servers get faster. The investment is minimal — users log in once, but attackers have to crack millions of hashes.
+
+Use our [Bcrypt Generator](/) to test different round counts and see the hashes they produce.

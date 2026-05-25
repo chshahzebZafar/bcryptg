@@ -1,0 +1,219 @@
+---
+title: 'Bcrypt in PHP — password_hash() & password_verify() Guide'
+description: 'Learn how to hash and verify passwords with bcrypt in PHP using password_hash() and password_verify(). Covers Laravel, migration from MD5, and best practices.'
+date: '2026-02-01'
+lastModified: '2026-05-01'
+tags: ['bcrypt', 'php', 'tutorial', 'laravel']
+readingTime: '7 min read'
+---
+
+## PHP Has Bcrypt Built In
+
+Since PHP 5.5, bcrypt is available as a built-in function. No external library is required:
+
+```php
+// Hash a password
+$hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+
+// Verify a password
+$valid = password_verify($password, $hash);
+```
+
+This is the only correct way to hash passwords in PHP. Never use `md5()`, `sha1()`, or `crypt()` for passwords.
+
+## password_hash()
+
+```php
+<?php
+
+$password = 'mySecurePassword123!';
+
+// Basic usage (cost defaults to 10 — increase to 12 minimum)
+$hash = password_hash($password, PASSWORD_BCRYPT);
+
+// Recommended — explicit cost of 12
+$hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+
+echo $hash;
+// $2y$12$LQv3c1yqBWVHxkd0LHAkCO...
+```
+
+**Important:** PHP uses `$2y$` (not `$2b$`) as the version identifier, but this is fully compatible with bcrypt implementations in other languages.
+
+## password_verify()
+
+```php
+<?php
+
+$password = 'mySecurePassword123!';
+$hash = '$2y$12$LQv3c1yqBWVHxkd0LHAkCO...';
+
+if (password_verify($password, $hash)) {
+    echo 'Password is correct';
+} else {
+    echo 'Invalid password';
+}
+```
+
+`password_verify()` is timing-attack safe — it uses a constant-time comparison.
+
+## Checking if a Hash Needs Rehashing
+
+As you increase your cost factor, use `password_needs_rehash()` to upgrade old hashes on login:
+
+```php
+<?php
+
+define('BCRYPT_COST', 12);
+
+function login(string $email, string $password, PDO $db): bool {
+    $user = $db->prepare('SELECT id, hash FROM users WHERE email = ?');
+    $user->execute([$email]);
+    $user = $user->fetch();
+
+    if (!$user || !password_verify($password, $user['hash'])) {
+        return false;
+    }
+
+    // Upgrade hash if cost factor has changed
+    if (password_needs_rehash($user['hash'], PASSWORD_BCRYPT, ['cost' => BCRYPT_COST])) {
+        $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => BCRYPT_COST]);
+        $update = $db->prepare('UPDATE users SET hash = ? WHERE id = ?');
+        $update->execute([$newHash, $user['id']]);
+    }
+
+    return true;
+}
+```
+
+## Full Registration & Login Example
+
+```php
+<?php
+
+class AuthController {
+    private PDO $db;
+    private int $cost;
+
+    public function __construct(PDO $db) {
+        $this->db = $db;
+        $this->cost = (int) ($_ENV['BCRYPT_COST'] ?? 12);
+    }
+
+    public function register(string $email, string $password): array {
+        // Validate
+        if (strlen($password) < 8) {
+            return ['error' => 'Password must be at least 8 characters'];
+        }
+
+        // Check for existing email
+        $check = $this->db->prepare('SELECT id FROM users WHERE email = ?');
+        $check->execute([$email]);
+        if ($check->fetch()) {
+            return ['error' => 'Email already registered'];
+        }
+
+        // Hash and store
+        $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => $this->cost]);
+        $stmt = $this->db->prepare('INSERT INTO users (email, hash) VALUES (?, ?)');
+        $stmt->execute([$email, $hash]);
+
+        return ['success' => true];
+    }
+
+    public function login(string $email, string $password): bool {
+        $stmt = $this->db->prepare('SELECT id, hash FROM users WHERE email = ?');
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            // Prevent timing attacks — hash even on failure
+            password_hash('dummy', PASSWORD_BCRYPT, ['cost' => $this->cost]);
+            return false;
+        }
+
+        if (!password_verify($password, $user['hash'])) {
+            return false;
+        }
+
+        // Rehash if needed
+        if (password_needs_rehash($user['hash'], PASSWORD_BCRYPT, ['cost' => $this->cost])) {
+            $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => $this->cost]);
+            $update = $this->db->prepare('UPDATE users SET hash = ? WHERE id = ?');
+            $update->execute([$newHash, $user['id']]);
+        }
+
+        return true;
+    }
+}
+```
+
+## Laravel Integration
+
+Laravel handles bcrypt automatically through its `Hash` facade and `bcrypt()` helper:
+
+```php
+use Illuminate\Support\Facades\Hash;
+
+// Hash
+$hash = Hash::make('myPassword', ['rounds' => 12]);
+// or
+$hash = bcrypt('myPassword');
+
+// Verify
+$valid = Hash::check('myPassword', $hash);
+
+// Check if rehash needed
+if (Hash::needsRehash($hash)) {
+    $hash = Hash::make($password);
+    $user->update(['password' => $hash]);
+}
+```
+
+Configure the cost in `config/hashing.php`:
+
+```php
+return [
+    'driver' => 'bcrypt',
+    'bcrypt' => [
+        'rounds' => env('BCRYPT_ROUNDS', 12),
+    ],
+];
+```
+
+## Migrating from MD5
+
+If you have an existing system with MD5 passwords, migrate progressively on login:
+
+```php
+function loginWithMigration(string $email, string $password, PDO $db): bool {
+    $stmt = $db->prepare('SELECT id, hash, hash_type FROM users WHERE email = ?');
+    $stmt->execute([$email]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$user) return false;
+
+    if ($user['hash_type'] === 'md5') {
+        // Check against MD5 hash
+        if (md5($password) !== $user['hash']) return false;
+
+        // Migrate to bcrypt
+        $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+        $update = $db->prepare('UPDATE users SET hash = ?, hash_type = "bcrypt" WHERE id = ?');
+        $update->execute([$newHash, $user['id']]);
+        return true;
+    }
+
+    return password_verify($password, $user['hash']);
+}
+```
+
+## Summary
+
+- Use `password_hash($password, PASSWORD_BCRYPT, ['cost' => 12])`
+- Always use `password_verify()` for comparison
+- Use `password_needs_rehash()` to upgrade hashes over time
+- Set cost in environment variable (`BCRYPT_COST`)
+- Never use `md5()`, `sha1()`, or `crypt()` for passwords
+
+Try our [Bcrypt Generator](/) to test hash generation, or read our [Node.js tutorial](/blog/bcrypt-nodejs-tutorial).

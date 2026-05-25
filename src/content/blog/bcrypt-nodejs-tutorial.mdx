@@ -1,0 +1,231 @@
+---
+title: 'Bcrypt in Node.js — Complete Tutorial with Code Examples'
+description: 'Learn how to hash and verify passwords with bcrypt in Node.js. Covers bcryptjs installation, async usage, Express integration, and common mistakes to avoid.'
+date: '2026-01-20'
+lastModified: '2026-05-01'
+tags: ['bcrypt', 'nodejs', 'javascript', 'tutorial']
+readingTime: '9 min read'
+---
+
+## Install bcryptjs
+
+There are two bcrypt packages for Node.js:
+
+- **bcrypt** — native C++ bindings, faster but requires compilation
+- **bcryptjs** — pure JavaScript, works everywhere including serverless
+
+For most projects, `bcryptjs` is the better choice:
+
+```bash
+npm install bcryptjs
+```
+
+If you need TypeScript types:
+
+```bash
+npm install @types/bcryptjs
+```
+
+## Basic Usage
+
+```js
+const bcrypt = require('bcryptjs');
+// or ESM: import bcrypt from 'bcryptjs';
+
+// Hash a password
+const password = 'mySecurePassword123!';
+const saltRounds = 12;
+
+const hash = await bcrypt.hash(password, saltRounds);
+console.log(hash);
+// $2b$12$LQv3c1yqBWVHxkd0LHAkCO...
+
+// Verify a password
+const isMatch = await bcrypt.compare(password, hash);
+console.log(isMatch); // true
+
+const isWrong = await bcrypt.compare('wrongPassword', hash);
+console.log(isWrong); // false
+```
+
+## Async vs Sync
+
+Always use the **async** versions (`bcrypt.hash`, `bcrypt.compare`). The synchronous versions (`bcrypt.hashSync`, `bcrypt.compareSync`) block the event loop and will degrade performance under load:
+
+```js
+// ✅ Correct — async
+const hash = await bcrypt.hash(password, 12);
+const valid = await bcrypt.compare(password, hash);
+
+// ❌ Avoid — blocks event loop
+const hash = bcrypt.hashSync(password, 12);
+const valid = bcrypt.compareSync(password, hash);
+```
+
+## Express.js Integration
+
+A complete user registration and login flow:
+
+```js
+const express = require('express');
+const bcrypt = require('bcryptjs');
+
+const app = express();
+app.use(express.json());
+
+// Simulate a database
+const users = new Map();
+const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10);
+
+// Registration endpoint
+app.post('/register', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password required' });
+  }
+
+  if (password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  }
+
+  if (users.has(email)) {
+    return res.status(409).json({ error: 'Email already registered' });
+  }
+
+  const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+  users.set(email, { email, hash });
+
+  res.status(201).json({ message: 'User registered successfully' });
+});
+
+// Login endpoint
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = users.get(email);
+  if (!user) {
+    // Use a constant-time response to prevent timing attacks
+    await bcrypt.hash('dummy', 12);
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  const valid = await bcrypt.compare(password, user.hash);
+  if (!valid) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  res.json({ message: 'Login successful' });
+});
+```
+
+## TypeScript Example
+
+```ts
+import bcrypt from 'bcryptjs';
+
+const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10);
+
+export async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, BCRYPT_ROUNDS);
+}
+
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(password, hash);
+}
+
+export function getHashRounds(hash: string): number {
+  return bcrypt.getRounds(hash);
+}
+```
+
+## Check Rounds of an Existing Hash
+
+```js
+const hash = '$2b$12$LQv3c1yqBWVHxkd0LHAkCO...';
+const rounds = bcrypt.getRounds(hash);
+console.log(rounds); // 12
+```
+
+Use this to implement re-hashing when you increase your cost factor:
+
+```js
+async function loginWithRehash(password, storedHash, userId) {
+  const valid = await bcrypt.compare(password, storedHash);
+  if (!valid) return false;
+
+  // Upgrade hash if rounds are outdated
+  const currentRounds = bcrypt.getRounds(storedHash);
+  if (currentRounds < BCRYPT_ROUNDS) {
+    const newHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    await db.updateUserHash(userId, newHash);
+  }
+
+  return true;
+}
+```
+
+## Common Mistakes
+
+**1. Comparing user input directly to hash (timing attack):**
+```js
+// ❌ Wrong — leaks information via timing
+if (storedHash === userHash) { ... }
+
+// ✅ Correct — constant-time comparison
+const valid = await bcrypt.compare(password, storedHash);
+```
+
+**2. Forgetting to await:**
+```js
+// ❌ Wrong — 'hash' will be a Promise, not a string
+const hash = bcrypt.hash(password, 12);
+await db.save(hash); // saves "[object Promise]"
+
+// ✅ Correct
+const hash = await bcrypt.hash(password, 12);
+```
+
+**3. Re-hashing already hashed passwords:**
+```js
+// ❌ Wrong — never hash the hash
+const doubleHashed = await bcrypt.hash(storedHash, 12);
+
+// ✅ Correct — only hash plain-text passwords
+const hash = await bcrypt.hash(plainTextPassword, 12);
+```
+
+**4. Low rounds in production:**
+```js
+// ❌ Wrong — rounds 4–6 are for testing only
+const hash = await bcrypt.hash(password, 4);
+
+// ✅ Correct — use environment variable with safe default
+const hash = await bcrypt.hash(password, BCRYPT_ROUNDS); // default 12
+```
+
+## Testing
+
+Use lower rounds (4) in tests to keep them fast:
+
+```js
+// jest.setup.js
+process.env.BCRYPT_ROUNDS = '4';
+
+// Or mock bcrypt in unit tests
+jest.mock('bcryptjs', () => ({
+  hash: jest.fn().mockResolvedValue('$2b$04$hashed'),
+  compare: jest.fn().mockResolvedValue(true),
+  getRounds: jest.fn().mockReturnValue(4),
+}));
+```
+
+## Summary
+
+- Use `bcryptjs` for universal compatibility
+- Always use async methods (`hash`, `compare`)
+- Set `BCRYPT_ROUNDS` via environment variable (default 12)
+- Return consistent errors to prevent user enumeration
+- Implement re-hashing on login to upgrade old hashes over time
+
+Try the [Bcrypt Generator](/) to see bcrypt hashes in action, or read our guide on [how many rounds to use](/blog/how-many-bcrypt-rounds).

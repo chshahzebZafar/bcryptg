@@ -1,0 +1,104 @@
+---
+title: 'What is Bcrypt? A Complete Developer Guide'
+description: 'Learn what bcrypt is, how it works, why it uses salting, and why it is the recommended algorithm for password hashing in 2026.'
+date: '2026-01-15'
+lastModified: '2026-05-01'
+tags: ['bcrypt', 'password hashing', 'security']
+readingTime: '7 min read'
+---
+
+## What is Bcrypt?
+
+Bcrypt is a password-hashing function designed by Niels Provos and David Mazières, first published in 1999. It was created to solve a critical problem in software security: as hardware becomes faster, older hashing methods like MD5 and SHA-1 become dangerously easy to brute-force.
+
+The name "bcrypt" comes from the **Blowfish cipher** it uses internally. Unlike general-purpose cryptographic hash functions, bcrypt was designed specifically for hashing passwords — meaning it is intentionally slow.
+
+## How Bcrypt Works
+
+Every bcrypt hash has three components embedded within it:
+
+1. **Version identifier** — e.g., `$2b$`, `$2a$`, or `$2y$`
+2. **Cost factor** — e.g., `$12$` means 2¹² = 4,096 iterations
+3. **Salt + hash** — a 128-bit salt concatenated with the 184-bit hash
+
+A typical bcrypt hash looks like this:
+
+```
+$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewEKxYHdEqQQRAGW
+```
+
+Breaking it down:
+- `$2b$` — version 2b (current standard)
+- `12` — cost factor (2¹² rounds)
+- The remaining 53 characters — salt (22 chars) + hash (31 chars), base64 encoded
+
+## The Blowfish Cipher
+
+Bcrypt is based on the Blowfish symmetric block cipher, specifically an algorithm called **Eksblowfish** (Expensive Key Schedule Blowfish). The key insight is that Blowfish has an expensive key setup phase — and bcrypt exploits this deliberately.
+
+The cost factor controls how many times the key setup phase runs. At cost 12, it runs 4,096 times. At cost 13, it runs 8,192 times. Each increment doubles the work required.
+
+## Why Salting Matters
+
+A **salt** is a random value added to the password before hashing. Bcrypt automatically generates a unique 128-bit salt for every hash it creates.
+
+Without salts, two users with the same password would produce the same hash. Attackers could precompute a massive table of hash → password mappings (a "rainbow table") and look up any hash instantly.
+
+With salts, even identical passwords produce completely different hashes. Rainbow table attacks become computationally infeasible.
+
+## Why Being Slow is a Feature
+
+A typical web server handles thousands of requests per second. Logging in is rare — most users log in once a day. So a 300ms hash operation per login has negligible impact on user experience.
+
+But for an attacker trying to brute-force hashes after a database breach, that 300ms per guess is devastating. At 12 rounds:
+
+| Hardware | Guesses/second | Time to crack 8-char password |
+|---|---|---|
+| Single GPU (2026) | ~3,300 | ~12 years |
+| 10 GPUs | ~33,000 | ~1.2 years |
+| MD5 on same hardware | ~10 billion | Under 1 second |
+
+This is why bcrypt is still the right choice for password hashing in 2026.
+
+## Bcrypt vs MD5 vs SHA-256
+
+| Algorithm | Designed for passwords | Salted | Speed | Recommendation |
+|---|---|---|---|---|
+| MD5 | No | No | Very fast | Never use for passwords |
+| SHA-256 | No | No | Fast | Never use for passwords |
+| SHA-256 + salt | No | Manual | Fast | Not recommended |
+| Bcrypt | Yes | Automatic | Slow (by design) | Recommended |
+| Argon2id | Yes | Automatic | Configurable | Also recommended |
+
+## Choosing a Cost Factor
+
+The OWASP recommendation for 2026 is a **minimum of 12 rounds** for bcrypt. This provides a good balance between security and performance on modern hardware.
+
+General guidance:
+- **Rounds 4–9**: Testing and development only
+- **Round 10**: Acceptable minimum for low-risk applications
+- **Round 12**: OWASP recommended minimum (2026)
+- **Round 13+**: Higher security applications, or when your server hardware can afford it
+
+The right number is the highest you can use while keeping login time under 1 second on your server hardware.
+
+## Verifying a Password
+
+Verification is straightforward:
+
+1. Extract the version, cost factor, and salt from the stored hash
+2. Hash the provided password with the same salt and cost factor
+3. Compare the result to the stored hash
+
+If they match, the password is correct. This is why you never need to "decrypt" a bcrypt hash — you just re-hash and compare.
+
+## Summary
+
+Bcrypt is the battle-tested standard for password hashing because:
+
+- **Salted** — prevents rainbow table attacks automatically
+- **Slow by design** — makes brute-force attacks impractical
+- **Adaptable** — cost factor can be increased as hardware improves
+- **Widely supported** — available in every major programming language
+
+Use our [Bcrypt Generator](/) to create hashes instantly, or read our guide on [how many rounds to use](/blog/how-many-bcrypt-rounds).

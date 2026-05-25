@@ -1,0 +1,110 @@
+---
+title: 'Bcrypt vs Argon2: Which Should You Use in 2026?'
+description: 'A detailed comparison of bcrypt and Argon2 for password hashing. Learn the differences, OWASP 2026 recommendations, and when to choose each algorithm.'
+date: '2026-02-10'
+lastModified: '2026-05-01'
+tags: ['bcrypt', 'argon2', 'password hashing', 'security']
+readingTime: '8 min read'
+---
+
+## Overview
+
+Both bcrypt and Argon2 are strong choices for password hashing in 2026. The debate between them is less about security and more about **threat model** and **ecosystem support**.
+
+OWASP 2026 recommends both — but lists Argon2id as the *first* recommendation for new systems, with bcrypt as a strong fallback for systems where Argon2 support is limited.
+
+## Quick Comparison
+
+| Feature | Bcrypt | Argon2id |
+|---|---|---|
+| Created | 1999 | 2015 |
+| Password Competition winner | No | Yes (PHC 2015) |
+| Memory hardness | No | Yes |
+| GPU resistance | Good | Excellent |
+| OWASP 2026 | Recommended (min 12 rounds) | First recommendation |
+| Language support | Universal | Growing |
+| Max password length | 72 bytes | Unlimited |
+
+## Understanding Memory Hardness
+
+The key technical difference between bcrypt and Argon2 is **memory hardness**.
+
+Bcrypt is **CPU-hard** — it requires many iterations of computation. Attackers can parallelize this on GPUs, running thousands of guesses simultaneously.
+
+Argon2 is **memory-hard** — it requires a configurable amount of RAM. This is much harder to parallelize on GPUs because graphics cards have limited memory bandwidth. An attacker with 100 GPUs may get 100x the CPU throughput but can't get 100x the memory throughput.
+
+In practice, with bcrypt at 12 rounds, a modern GPU can test around 3,000–5,000 passwords per second. With Argon2id at recommended settings (19MB memory, 2 iterations), a GPU might manage only 50–200 per second — a 15–100x improvement in resistance.
+
+## Bcrypt's 72-Byte Limitation
+
+Bcrypt silently truncates passwords longer than 72 bytes (not characters — bytes). This means:
+
+- "correct horse battery staple" (29 chars, all ASCII) = fine
+- A 100-character password = silently truncated to 72 bytes
+- A password with multibyte Unicode characters = may be truncated sooner
+
+This is a real concern for applications that allow passphrases. The most common workaround is pre-hashing with SHA-256 before passing to bcrypt, though this introduces its own edge cases.
+
+Argon2 has no password length limit.
+
+## When to Choose Bcrypt
+
+**Choose bcrypt when:**
+- You are maintaining an existing system that already uses bcrypt
+- Your language or framework has excellent bcrypt support but limited Argon2 support
+- You are using PHP (where `password_hash()` uses bcrypt by default and is extremely well-tested)
+- Your team is more familiar with bcrypt and you need a battle-tested solution
+
+Bcrypt has 25+ years of production use. Its implementations are thoroughly audited across every major language. That track record matters.
+
+## When to Choose Argon2id
+
+**Choose Argon2id when:**
+- You are building a new system from scratch
+- Your platform supports it natively (Python 3.6+, Node.js via `argon2`, Rust, Go)
+- You need to handle very long passwords (over 72 bytes)
+- Your threat model includes well-funded attackers with ASIC or GPU clusters
+
+## OWASP 2026 Recommended Settings
+
+**Bcrypt:**
+- Minimum 12 rounds
+- Recommended 13 rounds for high-security applications
+
+**Argon2id:**
+- 19MB memory (m=19456)
+- 2 iterations (t=2)
+- 1 degree of parallelism (p=1)
+- At least 16-byte salt
+- At least 32-byte output
+
+## Code Examples
+
+**Node.js — Argon2id:**
+```js
+const argon2 = require('argon2');
+
+const hash = await argon2.hash(password, {
+  type: argon2.argon2id,
+  memoryCost: 19456, // 19MB
+  timeCost: 2,
+  parallelism: 1,
+});
+
+const valid = await argon2.verify(hash, password);
+```
+
+**Node.js — Bcrypt:**
+```js
+const bcrypt = require('bcryptjs');
+const hash = await bcrypt.hash(password, 12);
+const valid = await bcrypt.compare(password, hash);
+```
+
+## The Bottom Line
+
+Both are secure when used correctly. For new projects, **Argon2id** is the forward-looking choice. For existing bcrypt systems, **staying on bcrypt with 12+ rounds is completely fine** — there's no urgent need to migrate.
+
+The worst password hashing algorithm is always the one you don't actually implement. Bcrypt works, is universal, and is well-understood. Use it confidently.
+
+Try our [Bcrypt Generator](/) to create secure hashes, or read our guide on [choosing the right number of rounds](/blog/how-many-bcrypt-rounds).
