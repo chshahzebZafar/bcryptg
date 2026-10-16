@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   keywords: ['developer security tools', 'hash generator', 'bcrypt tool', 'online security tools', 'password tools'],
   alternates: { canonical: 'https://bcryptgenerator.org/tools' },
   openGraph: {
+    siteName: 'BcryptGenerator.org',
+    locale: 'en_US',
     title: 'Free Developer Security Tools — Hash Generators & Password Tools',
     description: 'Free online security tools for developers: bcrypt generator, MD5, SHA-256, and password strength checker. All client-side — no data sent to servers.',
     url: 'https://bcryptgenerator.org/tools',

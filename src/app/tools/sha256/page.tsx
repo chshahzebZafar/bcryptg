@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   keywords: ['sha256 generator', 'sha-256 hash', 'sha256 online', 'sha256 hash generator', 'sha256 tool'],
   alternates: { canonical: 'https://bcryptgenerator.org/tools/sha256' },
   openGraph: {
+    siteName: 'BcryptGenerator.org',
+    locale: 'en_US',
     title: 'Free SHA-256 Hash Generator — Web Crypto API',
     description: 'Generate SHA-256 hashes instantly using Web Crypto API. Client-side only.',
     url: 'https://bcryptgenerator.org/tools/sha256',

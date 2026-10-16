@@ -1,15 +1,15 @@
 ---
 title: 'How Many Bcrypt Rounds Should You Use in 2026?'
-description: 'A practical guide to choosing the right bcrypt cost factor. OWASP 2026 recommendations, performance benchmarks, and how to pick the right number of rounds for your application.'
+description: 'A practical guide to choosing the right bcrypt cost factor. OWASP guidance, performance benchmarks, and how to pick the right number of rounds for your application.'
 date: '2026-03-05'
-lastModified: '2026-05-01'
+lastModified: '2026-10-16'
 tags: ['bcrypt', 'security', 'performance', 'owasp']
 readingTime: '6 min read'
 ---
 
 ## The Short Answer
 
-**Use 12 rounds minimum in 2026.** OWASP recommends a cost factor that requires at least 1 second to compute on your server hardware. For most modern servers, that means rounds 12–14.
+**Use 12 rounds for new systems in 2026.** OWASP's minimum is 10, but 12 costs only ~300ms on a modern server, so there's little reason to go lower. If your hardware allows it, 13–14 adds more margin.
 
 ## Understanding the Cost Factor
 
@@ -26,11 +26,9 @@ The bcrypt cost factor (sometimes called "rounds" or "work factor") is an expone
 
 Each increment doubles the work. Going from 12 to 13 rounds doubles attacker effort while only adding ~300ms per login.
 
-## OWASP 2026 Recommendation
+## What OWASP Recommends
 
-The [OWASP Password Storage Cheat Sheet](https://owasp.org/www-project-cheat-sheets/cheatsheets/Password_Storage_Cheat_Sheet.html) recommends:
-
-> For bcrypt, use a work factor of **12 or more**, targeting 1 second of computation time on your hardware. Increase as hardware improves.
+The [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) sets a bcrypt **work factor of 10 or more** and a password limit of 72 bytes. It also recommends bcrypt only for legacy systems where Argon2id or scrypt are unavailable (see [Bcrypt vs Argon2](/blog/bcrypt-vs-argon2)).
 
 This is a floor, not a ceiling. If your server can handle 14 rounds without impacting user experience, use 14.
 
@@ -115,7 +113,7 @@ async function login(password, storedHash) {
 
 | Application Type | Recommended Rounds | Reasoning |
 |---|---|---|
-| Low-risk (internal tools) | 12 | Baseline OWASP |
+| Low-risk (internal tools) | 12 | Comfortably above the OWASP minimum of 10 |
 | Standard web app | 12–13 | Good balance |
 | High-security (finance, healthcare) | 13–14 | Extra protection |
 | Admin accounts | 14 | Worth the extra 1 second |

@@ -2,7 +2,7 @@
 title: 'What is Bcrypt? A Complete Developer Guide'
 description: 'Learn what bcrypt is, how it works, why it uses salting, and why it is the recommended algorithm for password hashing in 2026.'
 date: '2026-01-15'
-lastModified: '2026-05-01'
+lastModified: '2026-10-16'
 tags: ['bcrypt', 'password hashing', 'security']
 readingTime: '7 min read'
 ---
@@ -72,12 +72,12 @@ This is why bcrypt is still the right choice for password hashing in 2026.
 
 ## Choosing a Cost Factor
 
-The OWASP recommendation for 2026 is a **minimum of 12 rounds** for bcrypt. This provides a good balance between security and performance on modern hardware.
+OWASP's [Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) sets a **minimum work factor of 10** for bcrypt. For new systems in 2026 we recommend **12** as the default, which costs only ~300ms on modern hardware.
 
 General guidance:
 - **Rounds 4–9**: Testing and development only
-- **Round 10**: Acceptable minimum for low-risk applications
-- **Round 12**: OWASP recommended minimum (2026)
+- **Round 10**: OWASP minimum
+- **Round 12**: Recommended default for new systems
 - **Round 13+**: Higher security applications, or when your server hardware can afford it
 
 The right number is the highest you can use while keeping login time under 1 second on your server hardware.

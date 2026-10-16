@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   keywords: ['password strength checker', 'password strength test', 'password analyzer', 'strong password checker', 'password security test'],
   alternates: { canonical: 'https://bcryptgenerator.org/tools/password-strength' },
   openGraph: {
+    siteName: 'BcryptGenerator.org',
+    locale: 'en_US',
     title: 'Free Password Strength Checker — NIST & OWASP Based',
     description: 'Check password strength with detailed feedback. Based on NIST SP 800-63B and OWASP guidelines. Client-side only.',
     url: 'https://bcryptgenerator.org/tools/password-strength',

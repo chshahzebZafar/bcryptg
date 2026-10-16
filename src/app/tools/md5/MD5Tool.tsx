@@ -28,15 +28,16 @@ function md5(input: string): string {
   function md5ii(a: number, b: number, c: number, d: number, x: number, s: number, t: number) {
     return md5cmn(c ^ (b | ~d), a, b, x, s, t)
   }
-  function md5blks(s: string) {
-    const nblk = ((s.length + 8) >> 6) + 1
+  // Operates on UTF-8 bytes so non-ASCII input matches md5sum / other tools.
+  function md5blks(bytes: Uint8Array) {
+    const nblk = ((bytes.length + 8) >> 6) + 1
     const blks = new Array(nblk * 16).fill(0)
-    for (let i = 0; i < s.length; i++) blks[i >> 2] |= s.charCodeAt(i) << ((i % 4) * 8)
-    blks[s.length >> 2] |= 0x80 << ((s.length % 4) * 8)
-    blks[nblk * 16 - 2] = s.length * 8
+    for (let i = 0; i < bytes.length; i++) blks[i >> 2] |= bytes[i] << ((i % 4) * 8)
+    blks[bytes.length >> 2] |= 0x80 << ((bytes.length % 4) * 8)
+    blks[nblk * 16 - 2] = bytes.length * 8
     return blks
   }
-  const x = md5blks(input)
+  const x = md5blks(new TextEncoder().encode(input))
   let a = 1732584193, b = -271733879, c = -1732584194, d = 271733878
   for (let i = 0; i < x.length; i += 16) {
     const [olda, oldb, oldc, oldd] = [a, b, c, d]

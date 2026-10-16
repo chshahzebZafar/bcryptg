@@ -3,15 +3,18 @@ import Link from 'next/link'
 import { BcryptGenerator } from '@/components/tools/BcryptGenerator'
 import { HashVerifier } from '@/components/tools/HashVerifier'
 import { TrustBar } from '@/components/ui/SecurityBadge'
-import { FAQSchema, SoftwareApplicationSchema } from '@/components/seo/JsonLd'
+import { FAQSchema } from '@/components/seo/JsonLd'
+import { ROUND_TIMINGS } from '@/lib/bcrypt'
 import type { FAQ } from '@/types'
 
 export const metadata: Metadata = {
-  title: 'Bcrypt Generator — Free Online Bcrypt Hash Generator & Verifier',
+  title: 'Bcrypt Generator — Free Online Hash Generator & Verifier',
   description:
     'Generate and verify bcrypt password hashes instantly. Adjustable salt rounds, client-side processing, code snippets in 7 languages. Free — no signup required.',
   alternates: { canonical: 'https://bcryptgenerator.org' },
   openGraph: {
+    siteName: 'BcryptGenerator.org',
+    locale: 'en_US',
     title: 'Free Bcrypt Hash Generator & Verifier — Online Tool',
     description: 'Generate and verify bcrypt password hashes instantly. Adjustable salt rounds, client-side only. No signup required.',
     url: 'https://bcryptgenerator.org',
@@ -33,11 +36,11 @@ const faqs: FAQ[] = [
   },
   {
     q: 'How many bcrypt rounds should I use in 2026?',
-    a: 'OWASP recommends a minimum of 12 rounds (cost factor) in 2026. Round 12 takes approximately 300ms on a modern server, which is slow enough to resist brute-force attacks but fast enough for production use. For higher security, use 13 or 14 rounds.',
+    a: 'OWASP sets a minimum bcrypt work factor (cost) of 10. For new systems in 2026 we recommend 12 as the default: it takes approximately 300ms on a modern server, which is slow enough to resist brute-force attacks but fast enough for production use. For higher security, use 13 or 14 rounds.',
   },
   {
     q: 'Is bcrypt still secure in 2026?',
-    a: 'Yes. Bcrypt remains a strong choice for password hashing in 2026. OWASP and NIST both recommend it with a cost factor of at least 12. While Argon2id is the latest recommendation for new systems, bcrypt with 12+ rounds is widely considered secure.',
+    a: 'Yes, with caveats. Bcrypt with a cost factor of 12 or more is still widely considered secure. OWASP now lists Argon2id as the first choice for new systems and recommends bcrypt for systems where Argon2id is not available, with a work factor of at least 10 and passwords limited to 72 bytes.',
   },
   {
     q: 'What is the difference between bcrypt and MD5?',
@@ -67,7 +70,6 @@ export default function HomePage() {
   return (
     <>
       <FAQSchema faqs={faqs} />
-      <SoftwareApplicationSchema />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 lg:py-14">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
@@ -159,14 +161,14 @@ export default function HomePage() {
               <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">Quick Reference</h3>
               <div className="space-y-2 text-xs font-mono">
                 {[
-                  { rounds: 10, time: '~100ms', label: 'Acceptable' },
-                  { rounds: 12, time: '~300ms', label: 'Recommended' },
-                  { rounds: 13, time: '~600ms', label: 'Strong' },
-                  { rounds: 14, time: '~1.2s', label: 'Very Strong' },
-                ].map(({ rounds, time, label }) => (
+                  { rounds: 10, label: 'Acceptable' },
+                  { rounds: 12, label: 'Recommended' },
+                  { rounds: 13, label: 'Strong' },
+                  { rounds: 14, label: 'Very Strong' },
+                ].map(({ rounds, label }) => (
                   <div key={rounds} className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0">
                     <span className="text-slate-400">Round {rounds}</span>
-                    <span className="text-slate-500">{time}</span>
+                    <span className="text-slate-500">{ROUND_TIMINGS[rounds]}</span>
                     <span className={rounds >= 12 ? 'text-emerald-400' : 'text-amber-400'}>{label}</span>
                   </div>
                 ))}

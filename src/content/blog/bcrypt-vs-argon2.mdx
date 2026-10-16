@@ -1,8 +1,8 @@
 ---
 title: 'Bcrypt vs Argon2: Which Should You Use in 2026?'
-description: 'A detailed comparison of bcrypt and Argon2 for password hashing. Learn the differences, OWASP 2026 recommendations, and when to choose each algorithm.'
+description: 'A detailed comparison of bcrypt and Argon2 for password hashing. Learn the differences, what OWASP recommends, and when to choose each algorithm.'
 date: '2026-02-10'
-lastModified: '2026-05-01'
+lastModified: '2026-10-16'
 tags: ['bcrypt', 'argon2', 'password hashing', 'security']
 readingTime: '8 min read'
 ---
@@ -11,7 +11,7 @@ readingTime: '8 min read'
 
 Both bcrypt and Argon2 are strong choices for password hashing in 2026. The debate between them is less about security and more about **threat model** and **ecosystem support**.
 
-OWASP 2026 recommends both — but lists Argon2id as the *first* recommendation for new systems, with bcrypt as a strong fallback for systems where Argon2 support is limited.
+OWASP's [Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) lists Argon2id as the *first* choice for new systems, and recommends bcrypt for legacy systems where Argon2id (or scrypt) isn't available.
 
 ## Quick Comparison
 
@@ -21,7 +21,7 @@ OWASP 2026 recommends both — but lists Argon2id as the *first* recommendation 
 | Password Competition winner | No | Yes (PHC 2015) |
 | Memory hardness | No | Yes |
 | GPU resistance | Good | Excellent |
-| OWASP 2026 | Recommended (min 12 rounds) | First recommendation |
+| OWASP guidance | Legacy systems (work factor ≥ 10) | First choice |
 | Language support | Universal | Growing |
 | Max password length | 72 bytes | Unlimited |
 
@@ -65,11 +65,11 @@ Bcrypt has 25+ years of production use. Its implementations are thoroughly audit
 - You need to handle very long passwords (over 72 bytes)
 - Your threat model includes well-funded attackers with ASIC or GPU clusters
 
-## OWASP 2026 Recommended Settings
+## OWASP Recommended Settings
 
 **Bcrypt:**
-- Minimum 12 rounds
-- Recommended 13 rounds for high-security applications
+- Work factor of 10 or more (we recommend 12 for new hashes)
+- Limit passwords to 72 bytes
 
 **Argon2id:**
 - 19MB memory (m=19456)

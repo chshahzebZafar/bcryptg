@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { Eye, EyeOff, Loader2, RefreshCw } from 'lucide-react'
-import { generateHash, getRoundsLabel } from '@/lib/bcrypt'
+import { Eye, EyeOff, Loader2, RefreshCw, AlertTriangle } from 'lucide-react'
+import { generateHash, getRoundsLabel, passwordTruncates } from '@/lib/bcrypt'
 import { CopyButton } from '@/components/ui/CopyButton'
 import { SecurityBadge } from '@/components/ui/SecurityBadge'
 import { CodeSnippets } from '@/components/tools/CodeSnippets'
@@ -78,6 +78,12 @@ export function BcryptGenerator() {
             {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
+        {passwordTruncates(password) && (
+          <p className="flex items-start gap-1.5 text-amber-400 text-xs mt-1.5">
+            <AlertTriangle size={14} className="shrink-0 mt-px" />
+            Password is longer than 72 bytes. bcrypt ignores everything after byte 72, so the extra characters won&apos;t affect the hash.
+          </p>
+        )}
       </div>
 
       <div>

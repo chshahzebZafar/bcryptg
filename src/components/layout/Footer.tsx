@@ -77,7 +77,7 @@ export function Footer() {
               <li>No signup required</li>
               <li>No data stored</li>
               <li>HTTPS encrypted</li>
-              <li>OWASP 2026 compliant</li>
+              <li>Follows OWASP guidance</li>
             </ul>
             <div className="mt-4">
               <Link

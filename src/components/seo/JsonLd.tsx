@@ -1,4 +1,5 @@
 import type { FAQ } from '@/types'
+import { author } from '@/lib/author'
 
 const OG_IMAGE = 'https://bcryptgenerator.org/opengraph-image'
 const SITE_URL = 'https://bcryptgenerator.org'
@@ -89,9 +90,10 @@ export function ArticleSchema({
       height: 630,
     },
     author: {
-      '@type': 'Organization',
-      name: SITE_NAME,
-      url: SITE_URL,
+      '@type': 'Person',
+      name: author.name,
+      jobTitle: author.jobTitle,
+      url: author.url,
     },
     publisher: {
       '@type': 'Organization',
@@ -158,15 +160,17 @@ export function OrganizationSchema() {
   )
 }
 
-export function SoftwareApplicationSchema() {
+export function PersonSchema() {
   const schema = {
     '@context': 'https://schema.org',
-    '@type': 'SoftwareApplication',
-    name: 'BcryptGenerator.org',
-    url: SITE_URL,
-    applicationCategory: 'SecurityApplication',
-    operatingSystem: 'Any (Web Browser)',
-    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    '@type': 'Person',
+    '@id': author.url,
+    name: author.name,
+    jobTitle: author.jobTitle,
+    url: author.url,
+    description: author.bio,
+    knowsAbout: author.knowsAbout,
+    worksFor: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
   }
   return (
     <script

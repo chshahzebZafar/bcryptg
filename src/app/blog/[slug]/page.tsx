@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { MDXRemote } from 'next-mdx-remote/rsc'
 import { getPostBySlug, getAllSlugs, getAllPosts } from '@/lib/mdx'
 import { ArticleSchema, BreadcrumbSchema } from '@/components/seo/JsonLd'
+import { AuthorBox } from '@/components/layout/AuthorBox'
+import { author } from '@/lib/author'
 import { ChevronRight } from 'lucide-react'
 import type { BlogPost } from '@/types'
 
@@ -21,12 +23,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: post.title,
     description: post.description,
     keywords: post.tags,
+    authors: [{ name: author.name, url: author.url }],
     alternates: { canonical: `https://bcryptgenerator.org/blog/${slug}` },
     openGraph: {
+      siteName: 'BcryptGenerator.org',
+      locale: 'en_US',
       title: post.title,
       description: post.description,
       url: `https://bcryptgenerator.org/blog/${slug}`,
       type: 'article',
+      authors: [author.name],
+      publishedTime: post.date,
+      modifiedTime: post.lastModified ?? post.date,
       images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: post.title }],
     },
     twitter: {
@@ -73,7 +81,14 @@ export default async function BlogPostPage({ params }: Props) {
         </nav>
 
         <header className="mb-8">
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-3">
+            <span>
+              By{' '}
+              <Link href="/about#author" className="text-slate-300 hover:text-blue-400 transition-colors">
+                {author.name}
+              </Link>
+            </span>
+            <span>·</span>
             <time dateTime={post.date}>
               {new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
             </time>
@@ -95,6 +110,10 @@ export default async function BlogPostPage({ params }: Props) {
 
         <div className="prose max-w-none">
           <MDXRemote source={post.content ?? ''} />
+        </div>
+
+        <div className="mt-10">
+          <AuthorBox />
         </div>
 
         <div className="mt-10 border-t border-slate-800 pt-8">

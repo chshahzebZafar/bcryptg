@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { BreadcrumbSchema } from '@/components/seo/JsonLd'
+import { BreadcrumbSchema, PersonSchema } from '@/components/seo/JsonLd'
+import { author } from '@/lib/author'
 import { ChevronRight, ShieldCheck, Lock, Eye } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -10,6 +11,8 @@ export const metadata: Metadata = {
   keywords: ['bcrypt generator privacy', 'bcrypt tool privacy policy', 'client-side bcrypt', 'secure bcrypt tool'],
   alternates: { canonical: 'https://bcryptgenerator.org/about' },
   openGraph: {
+    siteName: 'BcryptGenerator.org',
+    locale: 'en_US',
     title: 'About BcryptGenerator.org — Privacy Policy & Trust',
     description: 'Free, client-side bcrypt tool for developers. No data collection, no tracking, no signup required.',
     url: 'https://bcryptgenerator.org/about',
@@ -32,6 +35,7 @@ export default function AboutPage() {
           { name: 'About', url: 'https://bcryptgenerator.org/about' },
         ]}
       />
+      <PersonSchema />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 lg:py-14">
         <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-6" aria-label="Breadcrumb">
@@ -56,6 +60,26 @@ export default function AboutPage() {
             <p className="text-slate-400 text-sm leading-relaxed">
               The site is built with Next.js and <code className="font-mono text-xs text-emerald-400 bg-slate-800 px-1.5 py-0.5 rounded">bcryptjs</code> — a pure JavaScript bcrypt implementation that runs fully client-side, meaning your passwords never travel over the network.
             </p>
+          </section>
+
+          <section id="author" className="bg-slate-900 border border-slate-700 rounded-xl p-6 space-y-4 scroll-mt-20">
+            <div>
+              <h2 className="text-xl font-bold text-slate-100">About the Author</h2>
+              <p className="text-slate-300 font-medium mt-2">{author.name}</p>
+              <p className="text-slate-500 text-sm">{author.jobTitle}</p>
+            </div>
+            <p className="text-slate-400 text-sm leading-relaxed">{author.bio}</p>
+            <div>
+              <h3 className="text-slate-200 font-semibold text-sm mb-2">Passions</h3>
+              <ul className="space-y-1.5">
+                {author.passions.map(p => (
+                  <li key={p} className="text-slate-400 text-sm flex items-start gap-2">
+                    <span className="text-blue-400 mt-0.5">•</span>
+                    {p}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </section>
 
           <section className="bg-slate-900 border border-slate-700 rounded-xl p-6">

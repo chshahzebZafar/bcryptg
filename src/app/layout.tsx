@@ -21,7 +21,7 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL('https://bcryptgenerator.org'),
   title: {
-    default: 'Bcrypt Generator — Free Online Bcrypt Hash Generator & Verifier',
+    default: 'Bcrypt Generator — Free Online Hash Generator & Verifier',
     template: '%s | BcryptGenerator.org',
   },
   description:

@@ -129,7 +129,7 @@ export default function OgImage() {
             <span style={{ color: '#334155', display: 'flex' }}>·</span>
             <span>No signup</span>
             <span style={{ color: '#334155', display: 'flex' }}>·</span>
-            <span>OWASP 2026</span>
+            <span>Code in 7 languages</span>
           </div>
 
           {/* Badges */}
@@ -266,7 +266,7 @@ export default function OgImage() {
                 display: 'flex',
               }}
             >
-              Round 12 — Recommended (OWASP 2026)
+              Round 12 — Recommended default
             </div>
           </div>
 

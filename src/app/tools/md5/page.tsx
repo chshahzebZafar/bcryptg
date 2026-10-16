@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   keywords: ['md5 generator', 'md5 hash', 'md5 online', 'md5 hash generator', 'generate md5'],
   alternates: { canonical: 'https://bcryptgenerator.org/tools/md5' },
   openGraph: {
+    siteName: 'BcryptGenerator.org',
+    locale: 'en_US',
     title: 'Free MD5 Hash Generator — Online Tool',
     description: 'Generate MD5 hashes instantly, client-side only. No data sent to servers.',
     url: 'https://bcryptgenerator.org/tools/md5',

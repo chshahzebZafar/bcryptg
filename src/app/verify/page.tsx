@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://bcryptgenerator.org/verify' },
   keywords: ['bcrypt verifier', 'bcrypt checker', 'verify bcrypt hash', 'check bcrypt password', 'bcrypt hash verifier'],
   openGraph: {
+    siteName: 'BcryptGenerator.org',
+    locale: 'en_US',
     title: 'Bcrypt Hash Verifier — Free Online Tool',
     description: 'Paste a bcrypt hash and password to verify instantly. No server processing.',
     url: 'https://bcryptgenerator.org/verify',
@@ -75,7 +77,7 @@ export default function VerifyPage() {
         <section className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { href: '/blog/what-is-bcrypt', title: 'What is Bcrypt?', desc: 'How bcrypt works, salting, and why it is slow by design.' },
-            { href: '/blog/how-many-bcrypt-rounds', title: 'How Many Rounds?', desc: 'OWASP 2026 recommendations for choosing the right cost factor.' },
+            { href: '/blog/how-many-bcrypt-rounds', title: 'How Many Rounds?', desc: 'OWASP guidance and benchmarks for choosing the right cost factor.' },
             { href: '/blog/bcrypt-vs-argon2', title: 'Bcrypt vs Argon2', desc: 'Which password hashing algorithm should you use in 2026?' },
           ].map(({ href, title, desc }) => (
             <Link

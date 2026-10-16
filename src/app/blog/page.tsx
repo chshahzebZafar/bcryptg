@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   keywords: ['bcrypt tutorial', 'password hashing guide', 'argon2 vs bcrypt', 'developer security blog'],
   alternates: { canonical: 'https://bcryptgenerator.org/blog' },
   openGraph: {
+    siteName: 'BcryptGenerator.org',
+    locale: 'en_US',
     title: 'Developer Security Blog — Bcrypt, Password Hashing & More',
     description: 'Learn about bcrypt, password hashing best practices, Argon2, and secure authentication for developers.',
     url: 'https://bcryptgenerator.org/blog',

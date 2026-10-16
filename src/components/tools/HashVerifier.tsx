@@ -1,10 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { Eye, EyeOff, Loader2, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react'
-import { verifyHash, parseHash, getSecurityRating } from '@/lib/bcrypt'
+import { verifyHash, parseHash, getSecurityRating, passwordTruncates, MAX_VERIFY_ROUNDS } from '@/lib/bcrypt'
 import { SecurityBadge } from '@/components/ui/SecurityBadge'
 
-type VerifyResult = 'match' | 'no-match' | 'invalid' | null
+type VerifyResult = 'match' | 'no-match' | 'invalid' | 'too-costly' | null
 
 export function HashVerifier() {
   const [password, setPassword] = useState('')
@@ -24,7 +24,11 @@ export function HashVerifier() {
         setResult('invalid')
         return
       }
-      const match = await verifyHash(password, hashInput)
+      if (parsedHash.rounds > MAX_VERIFY_ROUNDS) {
+        setResult('too-costly')
+        return
+      }
+      const match = await verifyHash(password, hashInput.trim())
       setResult(match ? 'match' : 'no-match')
     } catch {
       setResult('invalid')
@@ -62,6 +66,12 @@ export function HashVerifier() {
             {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
+        {passwordTruncates(password) && (
+          <p className="flex items-start gap-1.5 text-amber-400 text-xs mt-1.5">
+            <AlertTriangle size={14} className="shrink-0 mt-px" />
+            Password is longer than 72 bytes. bcrypt only compares the first 72 bytes.
+          </p>
+        )}
       </div>
 
       <div>
@@ -97,7 +107,9 @@ export function HashVerifier() {
           </div>
           {parsedHash.rounds < 12 && (
             <p className="mt-3 text-amber-400 text-xs border-t border-slate-800 pt-2">
-              ⚠ OWASP recommends at least 12 rounds for 2026.
+              {parsedHash.rounds < 10
+                ? '⚠ Below the OWASP minimum work factor of 10.'
+                : '⚠ Meets the OWASP minimum of 10, but 12+ is recommended for new hashes.'}
             </p>
           )}
         </div>
@@ -143,7 +155,19 @@ export function HashVerifier() {
           <AlertTriangle size={18} className="shrink-0" />
           <div>
             <p className="font-semibold text-sm">Invalid bcrypt hash</p>
-            <p className="text-amber-500 text-xs mt-0.5">Hash must start with $2b$, $2a$, or $2y$.</p>
+            <p className="text-amber-500 text-xs mt-0.5">Expected a 60-character hash starting with $2b$, $2a$, or $2y$ and a cost of 04–31.</p>
+          </div>
+        </div>
+      )}
+
+      {result === 'too-costly' && (
+        <div className="flex items-center gap-3 bg-amber-950 border border-amber-700 text-amber-400 rounded-lg px-4 py-3">
+          <AlertTriangle size={18} className="shrink-0" />
+          <div>
+            <p className="font-semibold text-sm">Cost too high to verify in the browser</p>
+            <p className="text-amber-500 text-xs mt-0.5">
+              This hash uses {parsedHash?.rounds} rounds. The browser verifier supports up to {MAX_VERIFY_ROUNDS}. Above that, each check could take minutes or longer.
+            </p>
           </div>
         </div>
       )}
