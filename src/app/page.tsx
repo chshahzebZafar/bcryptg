@@ -4,27 +4,28 @@ import { BcryptGenerator } from '@/components/tools/BcryptGenerator'
 import { HashVerifier } from '@/components/tools/HashVerifier'
 import { TrustBar } from '@/components/ui/SecurityBadge'
 import { FAQSchema } from '@/components/seo/JsonLd'
+import { FaqList } from '@/components/ui/FaqList'
 import { ROUND_TIMINGS } from '@/lib/bcrypt'
 import type { FAQ } from '@/types'
 
 export const metadata: Metadata = {
-  title: 'Bcrypt Generator — Free Online Hash Generator & Verifier',
+  title: 'Bcrypt Generator — Free Online Bcrypt Hash Generator',
   description:
-    'Generate and verify bcrypt password hashes instantly. Adjustable salt rounds, client-side processing, code snippets in 7 languages. Free — no signup required.',
+    'Generate bcrypt password hashes instantly with adjustable salt rounds (4–14). Runs in your browser, with code snippets in 7 languages. Free — no signup required.',
   alternates: { canonical: 'https://bcryptgenerator.org' },
   openGraph: {
     siteName: 'BcryptGenerator.org',
     locale: 'en_US',
-    title: 'Free Bcrypt Hash Generator & Verifier — Online Tool',
-    description: 'Generate and verify bcrypt password hashes instantly. Adjustable salt rounds, client-side only. No signup required.',
+    title: 'Free Bcrypt Hash Generator — Online Tool',
+    description: 'Generate bcrypt password hashes instantly with adjustable salt rounds. Client-side only. No signup required.',
     url: 'https://bcryptgenerator.org',
     type: 'website',
     images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'Free Bcrypt Hash Generator' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Free Bcrypt Hash Generator & Verifier',
-    description: 'Generate and verify bcrypt password hashes instantly. Client-side only — no data sent to servers.',
+    title: 'Free Bcrypt Hash Generator',
+    description: 'Generate bcrypt password hashes instantly. Client-side only — no data sent to servers.',
     images: ['/opengraph-image'],
   },
 }
@@ -47,12 +48,12 @@ const faqs: FAQ[] = [
     a: 'MD5 is a fast cryptographic hash function never designed for passwords — it can be brute-forced in seconds with modern GPUs. Bcrypt is a slow, salted password-hashing function designed specifically to resist brute-force attacks. Never use MD5 for password storage.',
   },
   {
-    q: 'Can bcrypt hashes be reversed or decrypted?',
-    a: 'No. Bcrypt is a one-way hashing function — hashes cannot be reversed or decrypted. The only way to verify a password is to hash it with the same salt and compare the result. This is why even if a database is breached, bcrypt hashes cannot be reversed to plain-text passwords.',
+    q: 'Can I use a hash generated here in my application?',
+    a: 'Yes. Hashes use the standard $2b$ format, which bcrypt libraries for Node.js, PHP (password_verify), Python, Java, Go and Ruby all accept. That makes the generator handy for seeding a database, creating a first admin account or writing test fixtures. For real users, generate hashes in your own backend when they sign up.',
   },
   {
-    q: 'What does the $2b$ prefix mean in a bcrypt hash?',
-    a: 'The prefix identifies the bcrypt version. $2b$ is the current standard (fixed in 2011). $2a$ is an older version still widely used. $2y$ is used by PHP. All three are compatible in most implementations. The number after the prefix (e.g., $2b$12$) is the cost factor (rounds).',
+    q: 'Why does the generator warn about passwords over 72 bytes?',
+    a: 'Bcrypt only reads the first 72 bytes of a password and ignores the rest, so a longer password adds no extra security. Non-ASCII characters such as accented letters or emoji take 2–4 bytes each in UTF-8, so the limit can be reached with fewer than 72 characters.',
   },
   {
     q: 'Is it safe to use this tool? Do you store my passwords?',
@@ -61,7 +62,7 @@ const faqs: FAQ[] = [
 ]
 
 const relatedTools = [
-  { href: '/tools/md5', label: 'MD5 Generator', desc: 'Generate MD5 hashes for strings and files' },
+  { href: '/tools/md5', label: 'MD5 Generator', desc: 'Generate MD5 hashes and checksums for text' },
   { href: '/tools/sha256', label: 'SHA-256 Generator', desc: 'Generate SHA-256 hashes using Web Crypto API' },
   { href: '/tools/password-strength', label: 'Password Strength', desc: 'Check how strong your password is' },
 ]
@@ -90,32 +91,15 @@ export default function HomePage() {
             </div>
 
             <div className="bg-slate-900 border border-slate-700 rounded-xl p-5 sm:p-6">
-              <h2 className="text-lg font-semibold text-slate-100 mb-1">Hash Verifier</h2>
-              <p className="text-slate-400 text-sm mb-5">Check if a password matches a bcrypt hash.</p>
+              <h2 className="text-lg font-semibold text-slate-100 mb-1">Quick Hash Check</h2>
+              <p className="text-slate-400 text-sm mb-5">
+                Test a hash you just generated. To inspect a hash or debug a check that fails, use the full{' '}
+                <Link href="/verify" className="text-blue-400 hover:text-blue-300 transition-colors">bcrypt checker</Link>.
+              </p>
               <HashVerifier />
             </div>
 
-            <section aria-labelledby="faq-heading">
-              <h2 id="faq-heading" className="text-2xl font-bold text-slate-100 mb-6">
-                Frequently Asked Questions
-              </h2>
-              <div className="space-y-4">
-                {faqs.map((faq, i) => (
-                  <details
-                    key={i}
-                    className="bg-slate-900 border border-slate-700 rounded-lg group"
-                  >
-                    <summary className="px-5 py-4 cursor-pointer text-slate-200 font-medium text-sm select-none list-none flex items-center justify-between gap-3 hover:text-slate-100">
-                      {faq.q}
-                      <span className="text-slate-500 text-lg leading-none shrink-0 group-open:rotate-45 transition-transform">+</span>
-                    </summary>
-                    <div className="px-5 pb-4">
-                      <p className="text-slate-400 text-sm leading-relaxed">{faq.a}</p>
-                    </div>
-                  </details>
-                ))}
-              </div>
-            </section>
+            <FaqList faqs={faqs} />
 
             <section aria-labelledby="what-is-bcrypt-heading">
               <h2 id="what-is-bcrypt-heading" className="text-2xl font-bold text-slate-100 mb-4">

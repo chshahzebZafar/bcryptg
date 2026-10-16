@@ -37,8 +37,8 @@ const tools = [
   {
     href: '/verify',
     icon: Lock,
-    label: 'Bcrypt Verifier',
-    desc: 'Verify if a password matches a bcrypt hash. Supports $2b$, $2a$, and $2y$ format hashes.',
+    label: 'Bcrypt Checker',
+    desc: 'Check a password against a bcrypt hash, inspect its cost and salt, and debug failed comparisons.',
     badge: null,
     badgeColor: '',
   },
@@ -62,7 +62,7 @@ const tools = [
     href: '/tools/password-strength',
     icon: Shield,
     label: 'Password Strength Checker',
-    desc: 'Check how strong your password is with detailed feedback. Based on NIST and OWASP guidelines.',
+    desc: 'Check how strong your password is, with detailed feedback and current NIST guidance.',
     badge: null,
     badgeColor: '',
   },
@@ -119,6 +119,38 @@ export default function ToolsPage() {
             </Link>
           ))}
         </div>
+
+        <article className="prose max-w-none mt-6">
+          <h2>Which tool do you need?</h2>
+          <div className="overflow-x-auto">
+            <table>
+              <thead>
+                <tr><th>If you want to…</th><th>Use</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Store a user&apos;s password safely</td><td><Link href="/">Bcrypt Generator</Link></td></tr>
+                <tr><td>Check a password against a stored bcrypt hash, or debug a failing login</td><td><Link href="/verify">Bcrypt Checker</Link></td></tr>
+                <tr><td>Fingerprint a file or message, or verify a download</td><td><Link href="/tools/sha256">SHA-256 Generator</Link></td></tr>
+                <tr><td>Match a value from an older system that uses MD5</td><td><Link href="/tools/md5">MD5 Generator</Link></td></tr>
+                <tr><td>See how guessable a password is</td><td><Link href="/tools/password-strength">Password Strength Checker</Link></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>Password hashing vs general-purpose hashing</h2>
+          <p>
+            All of these tools produce hashes, one-way fingerprints that can&apos;t be turned back into the original input. The difference is speed. <strong>MD5 and SHA-256</strong> are built to be fast, which is ideal for checking that a file hasn&apos;t changed but dangerous for passwords, because attackers can try billions of guesses per second.
+          </p>
+          <p>
+            <strong>Bcrypt</strong> is built to be slow and adds a random salt to every hash, so each guess against a stolen hash costs real time. That is why passwords belong in bcrypt (or Argon2id) and nowhere else. Read{' '}
+            <Link href="/blog/what-is-bcrypt">what bcrypt is and how it works</Link> for the full picture.
+          </p>
+
+          <h2>Your data stays in your browser</h2>
+          <p>
+            Every tool on this site runs locally with JavaScript and your browser&apos;s built-in Web Crypto API. Passwords, hashes and text you enter are never sent to a server, logged or stored. More on this in our <Link href="/about">privacy policy</Link>.
+          </p>
+        </article>
       </div>
     </>
   )
