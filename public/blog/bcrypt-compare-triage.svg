@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 640" width="760" height="640" role="img" aria-labelledby="t d">
+  <title id="t">Triage flowchart: why bcrypt.compare() returns false</title>
+  <desc id="d">Three yes-or-no checks lead to the group of causes to read first. If a freshly hashed password does not compare as true, check how the library is called (causes 3 and 4). If the stored hash is not 60 characters starting with $2, the stored data is damaged (causes 5, 6 and 8). If the bcrypt checker says the password matches, the problem is in your code path (causes 1, 7 and 8). Otherwise the hash does not match this password (causes 2, 9 and 10).</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#64748b"/>
+    </marker>
+    <style>
+      text { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+      .q { fill: #1e293b; stroke: #3b82f6; stroke-width: 1.5; }
+      .start { fill: #172554; stroke: #3b82f6; stroke-width: 1.5; }
+      .out { fill: #0f172a; stroke: #334155; stroke-width: 1.5; }
+      .qt { fill: #f1f5f9; font-size: 15px; font-weight: 600; }
+      .ot { fill: #e2e8f0; font-size: 14px; font-weight: 600; }
+      .os { fill: #94a3b8; font-size: 13px; }
+      .lbl { fill: #94a3b8; font-size: 13px; font-weight: 600; }
+      .ln { stroke: #64748b; stroke-width: 1.5; fill: none; marker-end: url(#a); }
+    </style>
+  </defs>
+
+  <rect width="760" height="640" rx="12" fill="#020617"/>
+
+  <!-- Start -->
+  <rect class="start" x="40" y="24" width="320" height="56" rx="10"/>
+  <text class="qt" x="200" y="49" text-anchor="middle">Right password, but</text>
+  <text class="qt" x="200" y="68" text-anchor="middle">compare() returns false</text>
+  <path class="ln" d="M200 80V112"/>
+
+  <!-- Q1 -->
+  <rect class="q" x="40" y="114" width="320" height="64" rx="10"/>
+  <text class="qt" x="200" y="141" text-anchor="middle">Hash a test password, then</text>
+  <text class="qt" x="200" y="161" text-anchor="middle">compare it right away. True?</text>
+  <path class="ln" d="M360 146H418"/>
+  <text class="lbl" x="372" y="138">No</text>
+  <rect class="out" x="420" y="114" width="300" height="64" rx="10"/>
+  <text class="ot" x="438" y="140">How you call the library</text>
+  <text class="os" x="438" y="162">#3 argument order · #4 missing await</text>
+  <path class="ln" d="M200 178V230"/>
+  <text class="lbl" x="210" y="209">Yes</text>
+
+  <!-- Q2 -->
+  <rect class="q" x="40" y="232" width="320" height="64" rx="10"/>
+  <text class="qt" x="200" y="259" text-anchor="middle">Is the stored hash exactly 60</text>
+  <text class="qt" x="200" y="279" text-anchor="middle">characters, starting with $2?</text>
+  <path class="ln" d="M360 264H418"/>
+  <text class="lbl" x="372" y="256">No</text>
+  <rect class="out" x="420" y="222" width="300" height="84" rx="10"/>
+  <text class="ot" x="438" y="248">The stored data is damaged</text>
+  <text class="os" x="438" y="270">#5 truncated or whitespace</text>
+  <text class="os" x="438" y="290">#6 $ removed · #8 hash not loaded</text>
+  <path class="ln" d="M200 296V348"/>
+  <text class="lbl" x="210" y="327">Yes</text>
+
+  <!-- Q3 -->
+  <rect class="q" x="40" y="350" width="320" height="64" rx="10"/>
+  <text class="qt" x="200" y="377" text-anchor="middle">Does the bcrypt checker say</text>
+  <text class="qt" x="200" y="397" text-anchor="middle">the password matches?</text>
+  <path class="ln" d="M360 382H418"/>
+  <text class="lbl" x="372" y="374">Yes</text>
+  <rect class="out" x="420" y="340" width="300" height="84" rx="10"/>
+  <text class="ot" x="438" y="366">Your code path differs</text>
+  <text class="os" x="438" y="388">#1 comparing two hashes</text>
+  <text class="os" x="438" y="408">#7 $2y$ with native bcrypt · #8 errors</text>
+  <path class="ln" d="M200 414V466"/>
+  <text class="lbl" x="210" y="445">No</text>
+
+  <!-- Final -->
+  <rect class="out" x="40" y="468" width="320" height="104" rx="10"/>
+  <text class="ot" x="58" y="496">This hash doesn't match this password</text>
+  <text class="os" x="58" y="520">#2 re-hashed when the user was saved</text>
+  <text class="os" x="58" y="540">#9 password prepared differently</text>
+  <text class="os" x="58" y="560">#10 long password after an upgrade</text>
+
+  <text class="os" x="420" y="520">Numbers refer to the sections</text>
+  <text class="os" x="420" y="540">of this article.</text>
+  <text class="os" x="420" y="604" fill="#64748b">bcryptgenerator.org/verify</text>
+</svg>

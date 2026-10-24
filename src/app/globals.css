@@ -68,6 +68,14 @@ html {
   line-height: 1.75;
 }
 
+.prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5rem auto;
+  border-radius: 12px;
+}
+
 .prose ul.contains-task-list {
   list-style-type: none;
   padding-left: 0.25rem;

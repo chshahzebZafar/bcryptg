@@ -1,6 +1,8 @@
 export interface BlogPost {
   slug: string
   title: string
+  // Optional shorter <title> for search results; the page H1 keeps `title`.
+  seoTitle?: string
   description: string
   date: string
   lastModified: string

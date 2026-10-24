@@ -39,7 +39,7 @@ All scripts are in `tests/`. Re-run them with the commands at the top of each fi
 | compare ignores cost; bcrypt ↔ bcryptjs interoperate | `causes.js` §9 and cross-library |
 
 ## Not tested locally (cited only)
-- **Docker Compose `$$` escaping:** Docker isn't installed here. Source: Docker Compose interpolation docs. Please confirm or add the link.
+- **Docker Compose `$$` escaping:** Docker isn't installed here. Cited from the Compose file reference: https://docs.docker.com/reference/compose-file/interpolation/
 - **Spring Security behaviour:** from the official advisory.
 - Behaviour of Sequelize, TypeORM and Prisma hooks is mentioned only as "the same trap exists"; no specific API claims are made.
 

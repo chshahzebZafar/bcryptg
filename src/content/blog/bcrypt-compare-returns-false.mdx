@@ -1,5 +1,6 @@
 ---
 title: 'Why bcrypt.compare() Returns False (and How to Fix It)'
+seoTitle: 'bcrypt.compare() Returns False? 10 Causes and Fixes'
 description: 'Login failing even with the right password? Work through the real reasons bcrypt compare returns false in Node, PHP and Python, with a fix for each.'
 date: '2026-10-24'
 lastModified: '2026-10-24'
@@ -10,7 +11,7 @@ draft: true
 
 You type the right password, `bcrypt.compare()` says `false`, and the login fails. Before you suspect bcrypt itself, know this: the algorithm is deterministic. Given the same password bytes and the same stored hash, it always gives the same answer. When a correct password fails, something changed the password, the hash, or the way they reach `compare()`.
 
-This guide works through the causes in the order they usually turn up, each with a quick way to confirm it and a fix. Every example was run against the current `bcrypt` and `bcryptjs` packages for Node.js, PHP's `password_verify()` and Python's `bcrypt` library.
+This guide works through the causes in the order they usually turn up, each with a quick way to confirm it and a fix. Every example was run against the current [`bcrypt`](https://github.com/kelektiv/node.bcrypt.js) and [`bcryptjs`](https://github.com/dcodeIO/bcrypt.js) packages for Node.js, PHP's [`password_verify()`](https://www.php.net/manual/en/function.password-verify.php) and Python's [`bcrypt`](https://github.com/pyca/bcrypt) library.
 
 ## Start with a two-minute triage
 
@@ -36,6 +37,8 @@ console.log(JSON.stringify(user.passwordHash), user.passwordHash?.length)
 
 A healthy bcrypt hash is exactly 60 characters and starts with `$2a$`, `$2b$` or `$2y$`. Anything else points at your data (causes 5–7). Delete these debug lines once you're done; never log the password itself.
 
+<img src="/blog/bcrypt-compare-triage.svg" alt="Flowchart: three yes-or-no checks (does a fresh hash compare as true, is the stored hash 60 characters starting with $2, does the bcrypt checker say it matches) lead to the group of causes to read first." width="760" height="640" loading="lazy" />
+
 You can also paste the stored hash and the password into the [bcrypt checker](/verify). If the checker says they match but your app says they don't, your code is the problem. If the checker says they don't match either, the stored hash or the password is not what you think it is.
 
 ## 1. You're comparing hashes instead of calling compare
@@ -57,7 +60,7 @@ The same applies in other languages. In PHP, use `password_verify($password, $ha
 
 If logins work right after sign-up but fail after the user edits their profile, this is almost certainly the cause. A "hash the password before save" hook runs on every save, so when an unrelated field changes, the existing hash gets hashed a second time. The stored value is now `hash(hash(password))`, and no password will ever match it.
 
-In Mongoose, guard the hook with `isModified`:
+In Mongoose, guard the hook with [`isModified`](https://mongoosejs.com/docs/api/document.html#Document.prototype.isModified()) (see Mongoose's [middleware docs](https://mongoosejs.com/docs/middleware.html)):
 
 ```js
 userSchema.pre('save', async function () {
@@ -121,20 +124,20 @@ If the triage showed a hash that isn't exactly 60 clean characters, the data was
 A bcrypt hash is full of `$` characters, and plenty of tools treat `$something` as a variable. That matters when you keep a hash in a config file, for example a seeded admin password.
 
 - **Shells.** In double quotes, `"$2b$10$..."` is expanded by the shell. In our test, bash turned a 60-character hash into two characters. Use single quotes.
-- **`.env` files with variable expansion.** Plain `dotenv` leaves the hash alone, but `dotenv-expand` cut it down to `$2b$10`, **even inside single quotes**. Next.js expands variables in `.env` files too, and its documentation says to escape a literal `$` as `\$`:
+- **`.env` files with variable expansion.** Plain `dotenv` leaves the hash alone, but `dotenv-expand` cut it down to `$2b$10`, **even inside single quotes**. Next.js expands variables in `.env` files too, and [its documentation](https://nextjs.org/docs/app/guides/environment-variables) says to escape a literal `$` as `\$`:
 
   ```bash
   ADMIN_PASSWORD_HASH=\$2b\$12\$RB2qR6GI4quP.PUs6xR5He37dCyunLcYFzlvUfwSX41XkRXgOQ3OS
   ```
 
   Only use the escaped form with a loader that expands variables. Plain `dotenv` would keep the backslashes.
-- **Docker Compose** interpolates `$` in `docker-compose.yml`. Write each `$` as `$$`.
+- **Docker Compose** interpolates `$` in `docker-compose.yml`. Write each `$` as `$$` ([Compose interpolation reference](https://docs.docker.com/reference/compose-file/interpolation/)).
 
 Whichever loader you use, print the length of the value your app actually receives. It should be 60.
 
 ## 7. A PHP hash checked with Node's native bcrypt package
 
-PHP's `password_hash()` produces hashes that start with `$2y$`. In our tests, the native `bcrypt` package for Node.js (version 6.0.0) **returned false for a genuine PHP hash**, while `bcryptjs` and Python's `bcrypt` both verified it. `$2y$` and `$2b$` produce identical hashes, so you can safely normalize the prefix before comparing:
+PHP's [`password_hash()`](https://www.php.net/manual/en/function.password-hash.php) produces hashes that start with `$2y$`. In our tests, the native `bcrypt` package for Node.js (version 6.0.0) **returned false for a genuine PHP hash**, while `bcryptjs` and Python's `bcrypt` both verified it. `$2y$` and `$2b$` produce identical hashes, so you can safely normalize the prefix before comparing:
 
 ```js
 const normalized = storedHash.replace(/^\$2y\$/, '$2b$')
@@ -147,7 +150,7 @@ Alternatively, switch to `bcryptjs`, which accepts all three prefixes. The rever
 
 Many apps hide the password field by default, for example `select: false` in a Mongoose schema or hidden attributes in other ORMs. Your login query then returns a user whose hash is `undefined`. Both Node libraries throw rather than return `false` (`data and hash arguments required` from `bcrypt`, `Illegal arguments: string, undefined` from `bcryptjs`). If your login handler catches errors and treats them as "wrong password", it looks exactly like compare returning false.
 
-Ask for the field explicitly in the login query:
+Ask for the field explicitly in the login query with [`select('+password')`](https://mongoosejs.com/docs/api/query.html#Query.prototype.select()):
 
 ```js
 const user = await User.findOne({ email }).select('+password')
@@ -163,7 +166,7 @@ Put the password preparation in one function and call it from both sign-up and l
 
 ## 10. Long passwords and library upgrades
 
-bcrypt only reads the first 72 bytes of a password. Older libraries silently ignore the rest. In our tests with Node's `bcrypt` and `bcryptjs`, a password with extra characters after 72 bytes still matched. Newer libraries refuse long input instead: Python's `bcrypt` 5.0.0 raises `ValueError: password cannot be longer than 72 bytes` in both `hashpw` and `checkpw`, and Spring Security now throws for passwords over 72 bytes after fixing [CVE-2025-22228](https://spring.io/security/cve-2025-22228).
+bcrypt only reads the first 72 bytes of a password. Older libraries silently ignore the rest. In our tests with Node's `bcrypt` and `bcryptjs`, a password with extra characters after 72 bytes still matched. Newer libraries refuse long input instead: Python's `bcrypt` 5.0.0 raises `ValueError: password cannot be longer than 72 bytes` in both `hashpw` and `checkpw` ([changelog](https://github.com/pyca/bcrypt/blob/main/CHANGELOG.rst)), and Spring Security now throws for passwords over 72 bytes after fixing [CVE-2025-22228](https://spring.io/security/cve-2025-22228).
 
 So a user with a long password, often from a password manager, can be locked out right after a dependency upgrade even though nothing else changed. If logins started failing after an upgrade, check how long the affected users' passwords are in bytes. Our [comparison of bcrypt and Argon2](/blog/bcrypt-vs-argon2) covers why the limit exists and how Argon2id avoids it.
 
