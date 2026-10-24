@@ -2,7 +2,7 @@
 title: 'What is Bcrypt? A Complete Developer Guide'
 description: 'Learn what bcrypt is, how it works, why it uses salting, and why it is the recommended algorithm for password hashing in 2026.'
 date: '2026-01-15'
-lastModified: '2026-10-16'
+lastModified: '2026-10-24'
 tags: ['bcrypt', 'password hashing', 'security']
 readingTime: '7 min read'
 ---
@@ -52,11 +52,13 @@ A typical web server handles thousands of requests per second. Logging in is rar
 
 But for an attacker trying to brute-force hashes after a database breach, that 300ms per guess is devastating. At 12 rounds:
 
-| Hardware | Guesses/second | Time to crack 8-char password |
+| Hardware | Guesses/second | Time to try every 8-char letters-and-digits password |
 |---|---|---|
-| Single GPU (2026) | ~3,300 | ~12 years |
-| 10 GPUs | ~33,000 | ~1.2 years |
-| MD5 on same hardware | ~10 billion | Under 1 second |
+| Single GPU (2026) | ~3,300 | ~2,100 years |
+| 10 GPUs | ~33,000 | ~210 years |
+| MD5 on same hardware | ~10 billion | ~6 hours |
+
+These are worst-case exhaustive searches. Real attacks try leaked and common passwords first, so a weak password falls far faster, which is why bcrypt and a strong password work together.
 
 This is why bcrypt is still the right choice for password hashing in 2026.
 

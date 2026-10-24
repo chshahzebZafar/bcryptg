@@ -4,6 +4,8 @@ export const siteConfig = {
   description:
     'Free online bcrypt hash generator and verifier. Generate secure password hashes with adjustable salt rounds. Client-side only — your passwords never leave your browser.',
   ogImage: 'https://bcryptgenerator.org/opengraph-image',
+  // Public contact address shown on /contact, /privacy and /terms.
+  contactEmail: 'contact@bcryptgenerator.org',
 }
 
 export function buildMetadata(overrides: {

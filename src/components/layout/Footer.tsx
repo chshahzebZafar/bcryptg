@@ -13,7 +13,13 @@ const learn = [
   { href: '/blog', label: 'Security Blog' },
   { href: '/blog/what-is-bcrypt', label: 'What is Bcrypt?' },
   { href: '/blog/bcrypt-vs-argon2', label: 'Bcrypt vs Argon2' },
-  { href: '/about', label: 'About & Privacy' },
+  { href: '/about', label: 'About' },
+]
+
+const legal = [
+  { href: '/contact', label: 'Contact' },
+  { href: '/privacy', label: 'Privacy Policy' },
+  { href: '/terms', label: 'Terms of Use' },
 ]
 
 export function Footer() {
@@ -79,14 +85,18 @@ export function Footer() {
               <li>HTTPS encrypted</li>
               <li>Follows OWASP guidance</li>
             </ul>
-            <div className="mt-4">
-              <Link
-                href="/about"
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                Privacy Policy →
-              </Link>
-            </div>
+            <ul className="mt-4 space-y-2">
+              {legal.map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
