@@ -85,6 +85,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/favicon.svg" />
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="theme-color" content="#2563eb" />
+        {/* Google AdSense. Plain <script> rather than next/script: AdSense rejects the data-nscript attribute. */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4098284345817036"
+          crossOrigin="anonymous"
+        />
       </head>
       <body suppressHydrationWarning className="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
         <Header />

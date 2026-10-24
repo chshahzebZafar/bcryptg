@@ -2,26 +2,26 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { BreadcrumbSchema, PersonSchema } from '@/components/seo/JsonLd'
 import { author } from '@/lib/author'
-import { ChevronRight, ShieldCheck, Lock, Eye } from 'lucide-react'
+import { ChevronRight, ShieldCheck, Lock, Eye, Megaphone } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'About BcryptGenerator.org — Privacy Policy & Trust',
   description:
-    'BcryptGenerator.org is a free, client-side bcrypt hash tool for developers. No data collection, no tracking, no signup. Read our privacy policy.',
+    'BcryptGenerator.org is a free, client-side bcrypt hash tool for developers. Your inputs never leave your browser, no signup. Read our privacy policy.',
   keywords: ['bcrypt generator privacy', 'bcrypt tool privacy policy', 'client-side bcrypt', 'secure bcrypt tool'],
   alternates: { canonical: 'https://bcryptgenerator.org/about' },
   openGraph: {
     siteName: 'BcryptGenerator.org',
     locale: 'en_US',
     title: 'About BcryptGenerator.org — Privacy Policy & Trust',
-    description: 'Free, client-side bcrypt tool for developers. No data collection, no tracking, no signup required.',
+    description: 'Free, client-side bcrypt tool for developers. Your inputs never leave your browser, no signup required.',
     url: 'https://bcryptgenerator.org/about',
     images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'BcryptGenerator.org — Privacy & Trust' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'About BcryptGenerator.org',
-    description: 'Free, client-side bcrypt tool. No data collection, no tracking.',
+    description: 'Free, client-side bcrypt tool. Your inputs never leave your browser.',
     images: ['/opengraph-image'],
   },
 }
@@ -88,18 +88,33 @@ export default function AboutPage() {
               <div className="flex items-start gap-3">
                 <ShieldCheck size={18} className="text-emerald-400 mt-0.5 shrink-0" />
                 <div>
-                  <h3 className="text-slate-200 font-semibold text-sm mb-1">No data collection</h3>
+                  <h3 className="text-slate-200 font-semibold text-sm mb-1">Your tool inputs stay in your browser</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">
-                    We do not collect, store, or transmit any passwords, hashes, or inputs you enter into our tools. All processing happens in your browser.
+                    We do not collect, store, or transmit any passwords, hashes, or text you enter into our tools. All processing happens in your browser.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Megaphone size={18} className="text-emerald-400 mt-0.5 shrink-0" />
+                <div>
+                  <h3 className="text-slate-200 font-semibold text-sm mb-1">Advertising and cookies</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed mb-2">
+                    We show ads through Google AdSense to keep the site free. Third-party vendors, including Google, use cookies to serve ads based on your previous visits to this and other websites. Google&apos;s use of advertising cookies lets it and its partners serve ads to you based on those visits.
+                  </p>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    You can opt out of personalized advertising in{' '}
+                    <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">Google Ads Settings</a>, or opt out of some third-party vendors&apos; cookies at{' '}
+                    <a href="https://www.aboutads.info/choices" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">aboutads.info</a>. Learn more about{' '}
+                    <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">how Google uses data from sites that use its services</a>.
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Lock size={18} className="text-emerald-400 mt-0.5 shrink-0" />
                 <div>
-                  <h3 className="text-slate-200 font-semibold text-sm mb-1">No cookies or tracking</h3>
+                  <h3 className="text-slate-200 font-semibold text-sm mb-1">Analytics</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">
-                    We do not use advertising cookies or cross-site tracking. Anonymous analytics (page views only) may be collected via Vercel Analytics to help us improve the site.
+                    We use Vercel Analytics to count anonymous page views so we can improve the site. It does not use cookies.
                   </p>
                 </div>
               </div>
