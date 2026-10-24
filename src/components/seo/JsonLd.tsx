@@ -101,7 +101,7 @@ export function ArticleSchema({
       url: SITE_URL,
       logo: {
         '@type': 'ImageObject',
-        url: `${SITE_URL}/favicon.ico`,
+        url: `${SITE_URL}/icon-512.png`,
       },
     },
     mainEntityOfPage: {
@@ -144,9 +144,9 @@ export function OrganizationSchema() {
     url: SITE_URL,
     logo: {
       '@type': 'ImageObject',
-      url: `${SITE_URL}/favicon.svg`,
-      width: 32,
-      height: 32,
+      url: `${SITE_URL}/icon-512.png`,
+      width: 512,
+      height: 512,
     },
     description: 'Free online bcrypt hash generator and verifier. Client-side only — no passwords sent to servers.',
     foundingDate: '2026',

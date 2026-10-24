@@ -80,9 +80,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <WebAppSchema />
         <OrganizationSchema />
+        {/* /favicon.ico comes from src/app/favicon.ico (Next.js adds that link automatically) */}
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="icon" href="/favicon.ico" sizes="32x32" />
-        <link rel="apple-touch-icon" href="/favicon.svg" />
+        <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="theme-color" content="#2563eb" />
         {/* Google AdSense. Plain <script> rather than next/script: AdSense rejects the data-nscript attribute. */}
