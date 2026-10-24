@@ -6,6 +6,7 @@ export interface BlogPost {
   lastModified: string
   tags: string[]
   readingTime: string
+  draft?: boolean
   content?: string
 }
 

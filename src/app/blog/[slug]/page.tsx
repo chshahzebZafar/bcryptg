@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { MDXRemote } from 'next-mdx-remote/rsc'
+import remarkGfm from 'remark-gfm'
 import { getPostBySlug, getAllSlugs, getAllPosts } from '@/lib/mdx'
 import { ArticleSchema, BreadcrumbSchema } from '@/components/seo/JsonLd'
 import { AuthorBox } from '@/components/layout/AuthorBox'
@@ -24,6 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: post.description,
     keywords: post.tags,
     authors: [{ name: author.name, url: author.url }],
+    ...(post.draft && { robots: { index: false, follow: false } }),
     alternates: { canonical: `https://bcryptgenerator.org/blog/${slug}` },
     openGraph: {
       siteName: 'BcryptGenerator.org',
@@ -72,6 +74,11 @@ export default async function BlogPostPage({ params }: Props) {
       />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 lg:py-14">
+        {post.draft && (
+          <p className="mb-6 rounded-lg border border-amber-700 bg-amber-950 px-4 py-2 text-sm text-amber-300">
+            Draft for review. Only visible in local development, not on the live site.
+          </p>
+        )}
         <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-6" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-slate-300 transition-colors">Home</Link>
           <ChevronRight size={12} />
@@ -109,7 +116,7 @@ export default async function BlogPostPage({ params }: Props) {
         </header>
 
         <div className="prose max-w-none">
-          <MDXRemote source={post.content ?? ''} />
+          <MDXRemote source={post.content ?? ''} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
         </div>
 
         <div className="mt-10">

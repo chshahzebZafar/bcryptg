@@ -68,6 +68,16 @@ html {
   line-height: 1.75;
 }
 
+.prose ul.contains-task-list {
+  list-style-type: none;
+  padding-left: 0.25rem;
+}
+
+.prose li.task-list-item input {
+  margin-right: 0.5rem;
+  accent-color: #2563eb;
+}
+
 .prose code {
   font-family: var(--font-mono);
   background: #1e293b;
