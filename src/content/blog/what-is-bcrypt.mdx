@@ -1,104 +1,102 @@
 ---
-title: 'What is Bcrypt? A Complete Developer Guide'
-description: 'Learn what bcrypt is, how it works, why it uses salting, and why it is the recommended algorithm for password hashing in 2026.'
+title: 'What is Bcrypt? How It Works and What It Is Used For'
+description: 'Bcrypt is a slow, salted password-hashing function. Learn what bcrypt means, what it is used for, how it works step by step, and whether it is still secure.'
 date: '2026-01-15'
-lastModified: '2026-10-16'
+lastModified: '2026-10-25'
 tags: ['bcrypt', 'password hashing', 'security']
-readingTime: '7 min read'
+readingTime: '8 min read'
 ---
 
-## What is Bcrypt?
+**Bcrypt is a password-hashing function: it turns a password into a fixed-length string that can be stored safely and checked later, but can't be turned back into the password.** It was designed by Niels Provos and David Mazières and published in 1999. Two features make it suited to passwords: it is deliberately slow, and it adds a random salt to every hash.
 
-Bcrypt is a password-hashing function designed by Niels Provos and David Mazières, first published in 1999. It was created to solve a critical problem in software security: as hardware becomes faster, older hashing methods like MD5 and SHA-1 become dangerously easy to brute-force.
-
-The name "bcrypt" comes from the **Blowfish cipher** it uses internally. Unlike general-purpose cryptographic hash functions, bcrypt was designed specifically for hashing passwords — meaning it is intentionally slow.
-
-## How Bcrypt Works
-
-Every bcrypt hash has three components embedded within it:
-
-1. **Version identifier** — e.g., `$2b$`, `$2a$`, or `$2y$`
-2. **Cost factor** — e.g., `$12$` means 2¹² = 4,096 iterations
-3. **Salt + hash** — a 128-bit salt concatenated with the 184-bit hash
-
-A typical bcrypt hash looks like this:
+A bcrypt hash looks like this. This one is a real hash of `correct horse battery staple`, so you can check it with the [bcrypt checker](/verify):
 
 ```
-$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewEKxYHdEqQQRAGW
+$2b$12$RB2qR6GI4quP.PUs6xR5He37dCyunLcYFzlvUfwSX41XkRXgOQ3OS
 ```
 
-Breaking it down:
-- `$2b$` — version 2b (current standard)
-- `12` — cost factor (2¹² rounds)
-- The remaining 53 characters — salt (22 chars) + hash (31 chars), base64 encoded
+## What does "bcrypt" mean?
 
-## The Blowfish Cipher
+The name combines **Blowfish**, the block cipher bcrypt is built on, with **crypt**, the traditional Unix function for hashing passwords. Bcrypt began as the password scheme of the OpenBSD operating system and is now available in practically every programming language.
 
-Bcrypt is based on the Blowfish symmetric block cipher, specifically an algorithm called **Eksblowfish** (Expensive Key Schedule Blowfish). The key insight is that Blowfish has an expensive key setup phase — and bcrypt exploits this deliberately.
+## What is bcrypt used for?
 
-The cost factor controls how many times the key setup phase runs. At cost 12, it runs 4,096 times. At cost 13, it runs 8,192 times. Each increment doubles the work required.
+Bcrypt is used almost exclusively for **storing passwords**. When someone creates an account, the application stores the bcrypt hash of their password instead of the password itself. When they log in, the application checks the password they typed against that hash.
 
-## Why Salting Matters
+That way, if the database is ever leaked, attackers don't get anyone's actual password. They get hashes they would have to crack one guess at a time.
 
-A **salt** is a random value added to the password before hashing. Bcrypt automatically generates a unique 128-bit salt for every hash it creates.
+You'll find bcrypt as the default or recommended option in many frameworks: PHP's `password_hash()`, Laravel, Ruby on Rails' `has_secure_password`, Spring Security's `BCryptPasswordEncoder`, and the `bcrypt` and `bcryptjs` packages for Node.js.
 
-Without salts, two users with the same password would produce the same hash. Attackers could precompute a massive table of hash → password mappings (a "rainbow table") and look up any hash instantly.
+Bcrypt is **not** the right tool for:
 
-With salts, even identical passwords produce completely different hashes. Rainbow table attacks become computationally infeasible.
+- **Encrypting data you need to read back.** Bcrypt is one-way. Use encryption such as AES for that.
+- **Checksums and file integrity.** Use a fast hash such as [SHA-256](/tools/sha256).
+- **API keys and tokens** that are checked on every request. Bcrypt's slowness adds latency to each call. A fast keyed hash (HMAC) is the usual choice there.
 
-## Why Being Slow is a Feature
+## How does bcrypt work?
 
-A typical web server handles thousands of requests per second. Logging in is rare — most users log in once a day. So a 300ms hash operation per login has negligible impact on user experience.
+Bcrypt hashing happens in four steps:
 
-But for an attacker trying to brute-force hashes after a database breach, that 300ms per guess is devastating. At 12 rounds:
+1. **Generate a salt.** Bcrypt creates 16 random bytes for every new hash.
+2. **Run the expensive setup.** It sets up the Blowfish cipher using the password and the salt, then repeats that key setup 2^cost times. This repeated setup, known as "Eksblowfish" (expensive key schedule Blowfish), is what makes bcrypt slow.
+3. **Encrypt a fixed string.** It uses the resulting cipher state to encrypt the constant text "OrpheanBeholderScryDoubt" 64 times.
+4. **Pack everything into one string.** The version, cost, salt and result are combined into the 60-character hash you store.
 
-| Hardware | Guesses/second | Time to crack 8-char password |
+Reading the example hash from left to right:
+
+| Part | Example | Meaning |
 |---|---|---|
-| Single GPU (2026) | ~3,300 | ~12 years |
-| 10 GPUs | ~33,000 | ~1.2 years |
-| MD5 on same hardware | ~10 billion | Under 1 second |
+| Version | `$2b$` | Which revision of bcrypt (`$2a$`, `$2b$` or `$2y$`) |
+| Cost | `12` | Work factor: 2¹² = 4,096 rounds of key setup |
+| Salt | `RB2qR6GI4quP.PUs6xR5He` | 22 characters encoding the random 16-byte salt |
+| Hash | `37dCyunLcYFzlvUfwSX41XkRXgOQ3OS` | 31 characters encoding the result |
 
-This is why bcrypt is still the right choice for password hashing in 2026.
+Because the salt and cost are stored inside the hash, you only ever store one value per user.
 
-## Bcrypt vs MD5 vs SHA-256
+### How is a password checked?
 
-| Algorithm | Designed for passwords | Salted | Speed | Recommendation |
+Checking is the same process run again. The library reads the version, cost and salt from the stored hash, hashes the password that was typed with exactly those settings, and compares the two results. If they match, the password is correct. Nothing is ever decrypted.
+
+## Why does bcrypt use a salt?
+
+Without a salt, everyone with the password `password123` would have the same hash. An attacker could precompute hashes for millions of common passwords once and look up every match instantly (a "rainbow table" attack).
+
+The random salt makes every hash unique, even for identical passwords. That's why hashing the same password twice gives two different results, and both still verify. Precomputed tables become useless, because the attacker would need a separate table for every salt.
+
+## Why is bcrypt slow, and why is that good?
+
+Speed is exactly what you don't want in a password hash. General-purpose hashes like MD5 and SHA-256 are built to be fast, and that helps attackers: they can try enormous numbers of guesses against a stolen hash.
+
+The numbers show the scale. In October 2022, security researcher Sam Croley reported benchmarking an overclocked RTX 4090 with hashcat at about **300 billion NTLM hashes per second** (NTLM is a fast hash, like MD5), but only about **200,000 bcrypt hashes per second** ([TechSpot](https://www.techspot.com/news/96328-security-researchers-show-off-rtx-4090-password-cracking.html)). Bcrypt was over a million times slower to attack on the same hardware, and every extra cost point halves the attacker's speed again.
+
+For your own server, a bcrypt check at a sensible cost takes a fraction of a second. That's barely noticeable at login, which happens rarely, but it adds up fast for someone testing billions of guesses.
+
+The cost factor also lets bcrypt keep pace with hardware. When computers get faster, you raise the cost by one and the work doubles. See [how many bcrypt rounds to use](/blog/how-many-bcrypt-rounds) for choosing a value.
+
+## Is bcrypt encryption?
+
+No. Encryption is two-way: with the right key, you get the original data back. Bcrypt is a one-way hash, so there's no key and no way to turn a hash back into a password. The only way to recover a password from a bcrypt hash is to guess it and check each guess, which bcrypt makes deliberately slow.
+
+## Is bcrypt still secure in 2026?
+
+Yes, when it's used properly. There are no known practical attacks against bcrypt itself, and OWASP's [Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) still lists it as acceptable with a work factor of at least 10. We recommend 12 for new hashes.
+
+Two caveats are worth knowing:
+
+- **Newer options exist.** OWASP now recommends **Argon2id** first for new systems, and bcrypt for systems where Argon2id isn't available. Argon2id also makes attackers pay in memory, not just computation. See [bcrypt vs Argon2](/blog/bcrypt-vs-argon2).
+- **The 72-byte limit.** Bcrypt only uses the first 72 bytes of a password. Some libraries silently ignore the rest, and newer ones reject longer passwords.
+
+## Bcrypt compared with other hashes
+
+| Algorithm | Designed for passwords | Salt built in | Speed | Use for passwords? |
 |---|---|---|---|---|
-| MD5 | No | No | Very fast | Never use for passwords |
-| SHA-256 | No | No | Fast | Never use for passwords |
-| SHA-256 + salt | No | Manual | Fast | Not recommended |
-| Bcrypt | Yes | Automatic | Slow (by design) | Recommended |
-| Argon2id | Yes | Automatic | Configurable | Also recommended |
+| MD5 | No | No | Very fast | Never |
+| SHA-256 | No | No | Very fast | Not on its own |
+| SHA-256 + salt | No | Manual | Very fast | Not recommended |
+| PBKDF2 | Yes | Yes | Tunable (iterations) | Yes, mainly where FIPS compliance is required |
+| Bcrypt | Yes | Yes | Slow by design | Yes |
+| Argon2id | Yes | Yes | Tunable (memory and time) | Yes, OWASP's first choice |
 
-## Choosing a Cost Factor
+## Try it
 
-OWASP's [Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) sets a **minimum work factor of 10** for bcrypt. For new systems in 2026 we recommend **12** as the default, which costs only ~300ms on modern hardware.
-
-General guidance:
-- **Rounds 4–9**: Testing and development only
-- **Round 10**: OWASP minimum
-- **Round 12**: Recommended default for new systems
-- **Round 13+**: Higher security applications, or when your server hardware can afford it
-
-The right number is the highest you can use while keeping login time under 1 second on your server hardware.
-
-## Verifying a Password
-
-Verification is straightforward:
-
-1. Extract the version, cost factor, and salt from the stored hash
-2. Hash the provided password with the same salt and cost factor
-3. Compare the result to the stored hash
-
-If they match, the password is correct. This is why you never need to "decrypt" a bcrypt hash — you just re-hash and compare.
-
-## Summary
-
-Bcrypt is the battle-tested standard for password hashing because:
-
-- **Salted** — prevents rainbow table attacks automatically
-- **Slow by design** — makes brute-force attacks impractical
-- **Adaptable** — cost factor can be increased as hardware improves
-- **Widely supported** — available in every major programming language
-
-Use our [Bcrypt Generator](/) to create hashes instantly, or read our guide on [how many rounds to use](/blog/how-many-bcrypt-rounds).
+Use the [bcrypt generator](/) to create a hash, then paste it into the [bcrypt checker](/verify) with the same password. Hash the same password twice and you'll see the salt at work: two different hashes, and both verify. For code, see the [Node.js](/blog/bcrypt-nodejs-tutorial), [PHP](/blog/bcrypt-php-tutorial) and [Python](/blog/bcrypt-python-tutorial) guides.

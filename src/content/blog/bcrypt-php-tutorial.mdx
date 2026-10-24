@@ -2,7 +2,7 @@
 title: 'Bcrypt in PHP — password_hash() & password_verify() Guide'
 description: 'Learn how to hash and verify passwords with bcrypt in PHP using password_hash() and password_verify(). Covers Laravel, migration from MD5, and best practices.'
 date: '2026-02-01'
-lastModified: '2026-05-01'
+lastModified: '2026-10-25'
 tags: ['bcrypt', 'php', 'tutorial', 'laravel']
 readingTime: '7 min read'
 ---
@@ -180,6 +180,29 @@ return [
     ],
 ];
 ```
+
+### Using a hash from another tool or language in Laravel
+
+If you paste in a bcrypt hash created somewhere else, for example by our [bcrypt generator](/) to seed an admin user, or by a Node.js or Python app you're migrating from, check its prefix first.
+
+PHP and Laravel write hashes that start with `$2y$`. Most other tools write `$2b$`. PHP's `password_verify()` accepts both, but Laravel also checks the hash's algorithm by default: the `HASH_VERIFY` setting, `'verify' => true` in the bcrypt section of `config/hashing.php`. That check uses PHP's `password_get_info()`, which only recognizes `$2y$` as bcrypt. So a perfectly valid `$2b$` hash makes `Hash::check()` throw:
+
+```
+RuntimeException: This password does not use the Bcrypt algorithm.
+```
+
+The fix is to change the prefix. `$2y$` and `$2b$` produce identical hashes, so nothing else needs to change:
+
+```php
+// "$2b$12$..." from another tool becomes "$2y$12$..."
+if (str_starts_with($hash, '$2b$') || str_starts_with($hash, '$2a$')) {
+    $hash = '$2y$' . substr($hash, 4);
+}
+```
+
+(Avoid doing this with `preg_replace()`: in its replacement string, `$2` means "capture group 2", so `'$2y$'` silently produces a broken hash.)
+
+Or edit the first four characters by hand before inserting the hash into your `users` table.
 
 ## Migrating from MD5
 

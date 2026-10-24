@@ -1,126 +1,127 @@
 ---
 title: 'How Many Bcrypt Rounds Should You Use in 2026?'
-description: 'A practical guide to choosing the right bcrypt cost factor. OWASP guidance, performance benchmarks, and how to pick the right number of rounds for your application.'
+description: 'How to choose bcrypt salt rounds (the cost factor): OWASP guidance, real timing measurements, a benchmark script for your own server, and how to upgrade old hashes.'
 date: '2026-03-05'
-lastModified: '2026-10-16'
+lastModified: '2026-10-25'
 tags: ['bcrypt', 'security', 'performance', 'owasp']
-readingTime: '6 min read'
+readingTime: '7 min read'
 ---
 
-## The Short Answer
+## The short answer
 
-**Use 12 rounds for new systems in 2026.** OWASP's minimum is 10, but 12 costs only ~300ms on a modern server, so there's little reason to go lower. If your hardware allows it, 13–14 adds more margin.
+**Use a cost of 12 for new systems in 2026,** and go higher if your server can afford it. OWASP's minimum is 10. When PHP raised its own default from 10 to 12 in PHP 8.4, the measurements behind that decision showed cost 12 taking between about 160 and 330 milliseconds per hash on a range of CPUs. That's a delay users won't notice at login.
 
-## Understanding the Cost Factor
+## What "rounds" and "salt rounds" actually mean
 
-The bcrypt cost factor (sometimes called "rounds" or "work factor") is an exponent, not a multiplier. Cost factor `N` means bcrypt performs `2^N` iterations:
+The number you pass to bcrypt goes by several names: rounds, salt rounds, cost, cost factor, work factor, or `BCRYPT_ROUNDS` in Laravel. They all mean the same thing, and the name "salt rounds" is misleading. The number has nothing to do with the salt; every hash still gets one random salt.
 
-| Cost Factor | Iterations | Typical Time (2026 server) |
+It's an **exponent**. A cost of `N` makes bcrypt repeat its expensive key setup 2^N times, so each step up **doubles** the work:
+
+| Cost | Key-setup rounds | Relative work |
 |---|---|---|
-| 10 | 1,024 | ~80ms |
-| 11 | 2,048 | ~150ms |
-| 12 | 4,096 | ~300ms |
-| 13 | 8,192 | ~600ms |
-| 14 | 16,384 | ~1.2s |
-| 15 | 32,768 | ~2.5s |
+| 10 | 1,024 | 1× |
+| 11 | 2,048 | 2× |
+| 12 | 4,096 | 4× |
+| 13 | 8,192 | 8× |
+| 14 | 16,384 | 16× |
 
-Each increment doubles the work. Going from 12 to 13 rounds doubles attacker effort while only adding ~300ms per login.
+The doubling applies to attackers too. Moving from cost 10 to cost 12 makes every guess against a stolen hash four times as expensive.
 
-## What OWASP Recommends
+## What OWASP recommends
 
-The [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) sets a bcrypt **work factor of 10 or more** and a password limit of 72 bytes. It also recommends bcrypt only for legacy systems where Argon2id or scrypt are unavailable (see [Bcrypt vs Argon2](/blog/bcrypt-vs-argon2)).
+The [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) sets a bcrypt **work factor of 10 or more**, together with a 72-byte password limit. It also recommends Argon2id first for new systems, and bcrypt where Argon2id isn't available. See [bcrypt vs Argon2](/blog/bcrypt-vs-argon2) for that comparison.
 
-This is a floor, not a ceiling. If your server can handle 14 rounds without impacting user experience, use 14.
+Treat 10 as a floor, not a target. Pick the highest cost your hardware handles comfortably.
 
-## How to Benchmark Your Server
+## How long does each cost take?
 
-Run this on your production hardware and choose the highest value under 1 second:
+These measurements come from the PHP project's [RFC that raised PHP's default bcrypt cost to 12](https://wiki.php.net/rfc/bcrypt_cost_2023), measured with PHP 8.2 on mains power. Times are per hash:
+
+| CPU | Cost 10 | Cost 11 | Cost 12 | Cost 13 | Cost 14 |
+|---|---|---|---|---|---|
+| Intel Xeon E-2246G (2019) | 40 ms | 79 ms | 159 ms | 316 ms | 632 ms |
+| AMD EPYC 7002 (2019) | 59 ms | 116 ms | 244 ms | 485 ms | 997 ms |
+| Apple M1 Pro (2021) | 61 ms | 121 ms | 240 ms | 481 ms | 966 ms |
+| Intel Xeon E31245 (2011) | 64 ms | 128 ms | 256 ms | 523 ms | 1,048 ms |
+| Intel Core i5-2430M (2011 laptop) | 81 ms | 162 ms | 328 ms | 657 ms | 1,319 ms |
+
+The RFC's conclusion: cost 12 is "well below 0.5 seconds on all tested CPUs".
+
+Your numbers will differ with the language, the library and the hardware. A pure-JavaScript library like `bcryptjs` is noticeably slower than a native one, and laptops vary a lot between runs as the CPU changes power state. On the laptop used to test this article, the same cost-12 hash took anywhere from about 0.35 to 1 second across runs. That's why the next step matters.
+
+## Benchmark your own server
+
+Run this on your production hardware, or the closest thing to it. It takes the median of five runs per cost, so one slow run doesn't skew the result:
 
 ```js
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs') // or require('bcrypt')
 
 async function benchmark() {
-  for (let rounds = 10; rounds <= 15; rounds++) {
-    const start = Date.now();
-    await bcrypt.hash('benchmark-password', rounds);
-    const ms = Date.now() - start;
-    console.log(`Rounds ${rounds}: ${ms}ms`);
+  for (let cost = 10; cost <= 14; cost++) {
+    const times = []
+    for (let i = 0; i < 5; i++) {
+      const start = process.hrtime.bigint()
+      await bcrypt.hash('benchmark-password', cost)
+      times.push(Number(process.hrtime.bigint() - start) / 1e6)
+    }
+    times.sort((a, b) => a - b)
+    console.log(`Cost ${cost}: ${Math.round(times[2])} ms (median of 5)`)
   }
 }
 
-benchmark();
+benchmark()
 ```
 
-A typical output on a 2026 cloud instance (2 vCPUs, 4GB RAM):
+A practical rule: choose the highest cost that keeps a single hash **comfortably under a quarter to half a second** on your login servers. Remember that hashing uses CPU, so several people logging in at once multiplies the load.
 
-```
-Rounds 10: 82ms
-Rounds 11: 164ms
-Rounds 12: 328ms
-Rounds 13: 657ms
-Rounds 14: 1,314ms
-```
+## How the cost slows down attackers
 
-For this server, rounds 12 or 13 are the sweet spot.
+After a database breach, an attacker's only option is guessing: hash a candidate password with the stored salt and cost, compare, repeat. The cost sets the price of every guess.
 
-## Impact on Attacker
+For a sense of scale: in October 2022, security researcher Sam Croley reported an overclocked RTX 4090 running hashcat's benchmark at about **200,000 bcrypt hashes per second**, against about **300 billion per second for NTLM**, a fast hash ([TechSpot](https://www.techspot.com/news/96328-security-researchers-show-off-rtx-4090-password-cracking.html)). Each extra cost step halves that bcrypt rate again.
 
-Here's why the cost factor matters so much after a database breach:
+The cost works together with password strength. An 8-character password using upper- and lowercase letters and digits has 62⁸ ≈ 218 trillion possibilities. Twelve characters gives 62¹² ≈ 3.2 × 10²¹, more than ten million times as many. A higher cost buys time, but long, unique passwords are what make a stolen hash practically useless to an attacker. Weak passwords like `password123` fall quickly no matter what the cost is, because attackers try them first.
 
-At rounds 12, an attacker with a high-end GPU can test roughly 3,000 passwords per second. An 8-character password has about 218 trillion possible combinations (lowercase + uppercase + digits + symbols). At 3,000/sec:
+## Common mistakes
 
-- 8 characters: ~2.3 million years to exhaust
-- 6 characters: ~3.8 years to exhaust
-- 4 characters: ~2 hours to exhaust
-
-This is why long passwords matter alongside bcrypt — but even short passwords are significantly protected compared to MD5 (where the same GPU runs ~10 billion guesses per second).
-
-## Common Mistakes
-
-**Using rounds lower than 10 in production:**
-Rounds under 10 (especially 4–6 which are common in test suites) should never reach production. They can be brute-forced in minutes.
-
-**Hardcoding the rounds:**
-Store your cost factor in an environment variable or config:
+**Using test-suite costs in production.** Costs of 4–6 are fine in automated tests, where you want speed, but they should never reach production. Make the cost come from configuration:
 
 ```js
-const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10);
-const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10)
+const hash = await bcrypt.hash(password, BCRYPT_ROUNDS)
 ```
 
-This lets you increase rounds without a code deploy, and makes it easy to audit your security configuration.
-
-**Not re-hashing on login:**
-As you increase your cost factor over time, existing hashes still use the old (lower) factor. Implement re-hashing on successful login:
+**Never upgrading old hashes.** Raising the setting only affects new hashes. Existing users keep their old, lower cost until you re-hash. The usual approach is to upgrade at login, the one moment you have the plain password:
 
 ```js
-async function login(password, storedHash) {
-  const valid = await bcrypt.compare(password, storedHash);
-  if (!valid) return false;
+async function login(user, password) {
+  const valid = await bcrypt.compare(password, user.passwordHash)
+  if (!valid) return false
 
-  // Re-hash with current rounds if needed
-  const hashRounds = bcrypt.getRounds(storedHash);
-  if (hashRounds < BCRYPT_ROUNDS) {
-    const newHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-    await db.users.updateHash(newHash);
+  // Upgrade hashes created with an older, lower cost
+  if (bcrypt.getRounds(user.passwordHash) < BCRYPT_ROUNDS) {
+    user.passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
+    await saveUser(user)
   }
-
-  return true;
+  return true
 }
 ```
 
-## Rounds by Application Type
+PHP has this built in as `password_needs_rehash()`, covered in our [PHP guide](/blog/bcrypt-php-tutorial).
 
-| Application Type | Recommended Rounds | Reasoning |
+**Thinking the cost must match when you verify.** It doesn't. `compare()` reads the cost from the stored hash, so hashes with different costs verify side by side.
+
+**Going so high that logins become a target.** Bcrypt is CPU-heavy by design. A cost that takes several seconds per hash can let someone overload your server just by sending login requests, so rate-limit your login endpoint whatever cost you choose.
+
+## Choosing a cost by situation
+
+| Situation | Suggested cost | Why |
 |---|---|---|
-| Low-risk (internal tools) | 12 | Comfortably above the OWASP minimum of 10 |
-| Standard web app | 12–13 | Good balance |
-| High-security (finance, healthcare) | 13–14 | Extra protection |
-| Admin accounts | 14 | Worth the extra 1 second |
-| API (rate-limited) | 12+ | Rate limiting adds protection |
+| Automated tests | 4 | Speed; never in production |
+| Typical web app | 12 | Comfortably above OWASP's minimum; well under half a second on modern CPUs |
+| Sensitive data (finance, health, admin accounts) | 13–14, if your benchmark allows | Each step doubles attacker cost; check the login latency |
+| Very high login volume | The highest that holds up under peak load | Hashing cost multiplies with concurrent logins |
 
 ## Conclusion
 
-The cost factor is your most important tunable security parameter in bcrypt. Start at 12, benchmark on your hardware, and increase over time as servers get faster. The investment is minimal — users log in once, but attackers have to crack millions of hashes.
-
-Use our [Bcrypt Generator](/) to test different round counts and see the hashes they produce.
+Start at 12, benchmark on your own servers, re-hash old passwords at login, and revisit the number every year or two as hardware gets faster. Use the [bcrypt generator](/) to see hashes at different costs, and the [bcrypt checker](/verify) to read the cost of any existing hash.

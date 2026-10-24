@@ -49,7 +49,7 @@ const faqs: FAQ[] = [
   },
   {
     q: 'Can I use a hash generated here in my application?',
-    a: 'Yes. Hashes use the standard $2b$ format, which bcrypt libraries for Node.js, PHP (password_verify), Python, Java, Go and Ruby all accept. That makes the generator handy for seeding a database, creating a first admin account or writing test fixtures. For real users, generate hashes in your own backend when they sign up.',
+    a: 'Yes. Hashes use the standard $2b$ format, which mainstream bcrypt libraries accept; we have tested Node.js (bcrypt and bcryptjs), PHP’s password_verify() and Python’s bcrypt. That makes the generator handy for seeding a database, creating a first admin account or writing test fixtures. For Laravel, change the first four characters from $2b$ to $2y$ before saving: Laravel checks the hash type by default and only recognises $2y$, otherwise Hash::check() throws “This password does not use the Bcrypt algorithm.” For real users, generate hashes in your own backend when they sign up.',
   },
   {
     q: 'Why does the generator warn about passwords over 72 bytes?',
