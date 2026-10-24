@@ -2,7 +2,7 @@
 title: 'Bcrypt in PHP — password_hash() & password_verify() Guide'
 description: 'Learn how to hash and verify passwords with bcrypt in PHP using password_hash() and password_verify(). Covers Laravel, migration from MD5, and best practices.'
 date: '2026-02-01'
-lastModified: '2026-10-25'
+lastModified: '2026-10-24'
 tags: ['bcrypt', 'php', 'tutorial', 'laravel']
 readingTime: '7 min read'
 ---
@@ -56,6 +56,8 @@ if (password_verify($password, $hash)) {
 ```
 
 `password_verify()` is timing-attack safe — it uses a constant-time comparison.
+
+If it returns `false` for a password you know is correct, the usual suspects are a truncated `password` column, a hash that was re-hashed on save, or invisible whitespace. See [how to fix bcrypt checks that fail](/blog/bcrypt-compare-returns-false).
 
 ## Checking if a Hash Needs Rehashing
 

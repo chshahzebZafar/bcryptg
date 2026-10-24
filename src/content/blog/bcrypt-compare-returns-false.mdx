@@ -6,7 +6,6 @@ date: '2026-10-24'
 lastModified: '2026-10-24'
 tags: ['bcrypt', 'troubleshooting', 'nodejs', 'php', 'python']
 readingTime: '9 min read'
-draft: true
 ---
 
 You type the right password, `bcrypt.compare()` says `false`, and the login fails. Before you suspect bcrypt itself, know this: the algorithm is deterministic. Given the same password bytes and the same stored hash, it always gives the same answer. When a correct password fails, something changed the password, the hash, or the way they reach `compare()`.

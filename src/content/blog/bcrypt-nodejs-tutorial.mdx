@@ -167,6 +167,8 @@ async function loginWithRehash(password, storedHash, userId) {
 
 ## Common Mistakes
 
+If `bcrypt.compare()` keeps returning `false` for a password you know is right, work through [why bcrypt.compare() returns false](/blog/bcrypt-compare-returns-false). It covers ten causes, each with a tested fix.
+
 **1. Comparing user input directly to hash (timing attack):**
 ```js
 // ❌ Wrong — leaks information via timing

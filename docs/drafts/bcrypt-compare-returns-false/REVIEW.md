@@ -2,7 +2,7 @@
 
 Draft: `src/content/blog/bcrypt-compare-returns-false.mdx` (`draft: true`, so it's hidden in production).
 Preview: run `npm run dev`, then open http://localhost:3000/blog/bcrypt-compare-returns-false.
-Status: **Needs human review.** Do not remove `draft: true` until every box below is ticked.
+Status: **Published 2026-10-24** after review by Shahzeb Zafar. Inbound links added from /verify, the Node, PHP and Python tutorials, and the rounds post.
 
 ## Test environment (2026-10-24)
 

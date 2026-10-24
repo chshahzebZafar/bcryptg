@@ -188,7 +188,7 @@ export default function VerifyPage() {
           </p>
 
           <h2>Why a bcrypt check fails (and how to fix it)</h2>
-          <p>If you are sure the password is right but the check still fails, it is almost always one of these:</p>
+          <p>If you are sure the password is right but the check still fails, it is almost always one of these. For code examples and fixes in Node.js, PHP and Python, read the full guide: <Link href="/blog/bcrypt-compare-returns-false">why bcrypt.compare() returns false</Link>.</p>
         </article>
 
         <TipList items={failureReasons} numbered />

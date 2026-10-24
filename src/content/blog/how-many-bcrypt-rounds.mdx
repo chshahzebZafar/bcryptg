@@ -2,7 +2,7 @@
 title: 'How Many Bcrypt Rounds Should You Use in 2026?'
 description: 'How to choose bcrypt salt rounds (the cost factor): OWASP guidance, real timing measurements, a benchmark script for your own server, and how to upgrade old hashes.'
 date: '2026-03-05'
-lastModified: '2026-10-25'
+lastModified: '2026-10-24'
 tags: ['bcrypt', 'security', 'performance', 'owasp']
 readingTime: '7 min read'
 ---
@@ -109,7 +109,7 @@ async function login(user, password) {
 
 PHP has this built in as `password_needs_rehash()`, covered in our [PHP guide](/blog/bcrypt-php-tutorial).
 
-**Thinking the cost must match when you verify.** It doesn't. `compare()` reads the cost from the stored hash, so hashes with different costs verify side by side.
+**Thinking the cost must match when you verify.** It doesn't. `compare()` reads the cost from the stored hash, so hashes with different costs verify side by side. For the mistakes that *do* break verification, see [why bcrypt.compare() returns false](/blog/bcrypt-compare-returns-false).
 
 **Going so high that logins become a target.** Bcrypt is CPU-heavy by design. A cost that takes several seconds per hash can let someone overload your server just by sending login requests, so rate-limit your login endpoint whatever cost you choose.
 

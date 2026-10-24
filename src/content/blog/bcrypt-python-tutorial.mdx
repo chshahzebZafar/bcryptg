@@ -211,6 +211,8 @@ async def register(credentials: UserCredentials):
 
 ## Common Mistakes
 
+If `checkpw()` returns `False`, or raises `ValueError: Invalid salt`, for a password you know is right, see [why bcrypt password checks fail](/blog/bcrypt-compare-returns-false) for the causes and fixes.
+
 **Forgetting to encode strings to bytes:**
 ```python
 # ❌ Wrong
