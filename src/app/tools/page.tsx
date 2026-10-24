@@ -148,7 +148,7 @@ export default function ToolsPage() {
 
           <h2>Your data stays in your browser</h2>
           <p>
-            Every tool on this site runs locally with JavaScript and your browser&apos;s built-in Web Crypto API. Passwords, hashes and text you enter are never sent to a server, logged or stored. More on this in our <Link href="/about">privacy policy</Link>.
+            Every tool on this site runs locally with JavaScript and your browser&apos;s built-in Web Crypto API. Passwords, hashes and text you enter are never sent to a server, logged or stored. More on this in our <Link href="/privacy">privacy policy</Link>.
           </p>
         </article>
       </div>

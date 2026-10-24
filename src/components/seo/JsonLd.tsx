@@ -28,7 +28,7 @@ export function WebAppSchema() {
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'Support',
-      url: `${SITE_URL}/about`,
+      url: `${SITE_URL}/contact`,
     },
     publisher: {
       '@type': 'Organization',

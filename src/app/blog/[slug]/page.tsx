@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { MDXRemote } from 'next-mdx-remote/rsc'
+import remarkGfm from 'remark-gfm'
 import { getPostBySlug, getAllSlugs, getAllPosts } from '@/lib/mdx'
 import { ArticleSchema, BreadcrumbSchema } from '@/components/seo/JsonLd'
 import { AuthorBox } from '@/components/layout/AuthorBox'
@@ -109,7 +110,10 @@ export default async function BlogPostPage({ params }: Props) {
         </header>
 
         <div className="prose max-w-none">
-          <MDXRemote source={post.content ?? ''} />
+          <MDXRemote
+            source={post.content ?? ''}
+            options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }}
+          />
         </div>
 
         <div className="mt-10">

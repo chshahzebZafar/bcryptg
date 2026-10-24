@@ -2,7 +2,7 @@
 title: 'How Many Bcrypt Rounds Should You Use in 2026?'
 description: 'A practical guide to choosing the right bcrypt cost factor. OWASP guidance, performance benchmarks, and how to pick the right number of rounds for your application.'
 date: '2026-03-05'
-lastModified: '2026-10-16'
+lastModified: '2026-10-24'
 tags: ['bcrypt', 'security', 'performance', 'owasp']
 readingTime: '6 min read'
 ---
@@ -67,13 +67,15 @@ For this server, rounds 12 or 13 are the sweet spot.
 
 Here's why the cost factor matters so much after a database breach:
 
-At rounds 12, an attacker with a high-end GPU can test roughly 3,000 passwords per second. An 8-character password has about 218 trillion possible combinations (lowercase + uppercase + digits + symbols). At 3,000/sec:
+At rounds 12, an attacker with a high-end GPU can test roughly 3,000 passwords per second. Using only letters and digits (62 possible characters), an 8-character password has about 218 trillion possible combinations. Trying every one of them at 3,000/sec takes:
 
-- 8 characters: ~2.3 million years to exhaust
-- 6 characters: ~3.8 years to exhaust
-- 4 characters: ~2 hours to exhaust
+- 8 characters: ~2,300 years
+- 6 characters: ~7 months
+- 4 characters: ~1.5 hours
 
-This is why long passwords matter alongside bcrypt — but even short passwords are significantly protected compared to MD5 (where the same GPU runs ~10 billion guesses per second).
+Adding symbols (95 possible characters) makes the 8-character search about 30 times longer.
+
+This is why long passwords matter alongside bcrypt — and why bcrypt matters: with MD5, the same GPU runs ~10 billion guesses per second and exhausts every 8-character letters-and-digits password in about 6 hours.
 
 ## Common Mistakes
 

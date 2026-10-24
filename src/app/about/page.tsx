@@ -5,23 +5,23 @@ import { author } from '@/lib/author'
 import { ChevronRight, ShieldCheck, Lock, Eye } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'About BcryptGenerator.org — Privacy Policy & Trust',
+  title: 'About BcryptGenerator.org — Who Builds It and Why',
   description:
-    'BcryptGenerator.org is a free, client-side bcrypt hash tool for developers. No data collection, no tracking, no signup. Read our privacy policy.',
-  keywords: ['bcrypt generator privacy', 'bcrypt tool privacy policy', 'client-side bcrypt', 'secure bcrypt tool'],
+    'BcryptGenerator.org is a free, client-side bcrypt hash tool for developers, built by Shahzeb Zafar. Your tool inputs never leave your browser.',
+  keywords: ['about bcrypt generator', 'client-side bcrypt', 'secure bcrypt tool'],
   alternates: { canonical: 'https://bcryptgenerator.org/about' },
   openGraph: {
     siteName: 'BcryptGenerator.org',
     locale: 'en_US',
-    title: 'About BcryptGenerator.org — Privacy Policy & Trust',
-    description: 'Free, client-side bcrypt tool for developers. No data collection, no tracking, no signup required.',
+    title: 'About BcryptGenerator.org — Who Builds It and Why',
+    description: 'Free, client-side bcrypt tool for developers. Tool inputs never leave your browser.',
     url: 'https://bcryptgenerator.org/about',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'BcryptGenerator.org — Privacy & Trust' }],
+    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'About BcryptGenerator.org' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'About BcryptGenerator.org',
-    description: 'Free, client-side bcrypt tool. No data collection, no tracking.',
+    description: 'Free, client-side bcrypt tool. Tool inputs never leave your browser.',
     images: ['/opengraph-image'],
   },
 }
@@ -83,12 +83,12 @@ export default function AboutPage() {
           </section>
 
           <section className="bg-slate-900 border border-slate-700 rounded-xl p-6">
-            <h2 className="text-xl font-bold text-slate-100 mb-4">Privacy Policy</h2>
+            <h2 className="text-xl font-bold text-slate-100 mb-4">Privacy at a Glance</h2>
             <div className="space-y-5">
               <div className="flex items-start gap-3">
                 <ShieldCheck size={18} className="text-emerald-400 mt-0.5 shrink-0" />
                 <div>
-                  <h3 className="text-slate-200 font-semibold text-sm mb-1">No data collection</h3>
+                  <h3 className="text-slate-200 font-semibold text-sm mb-1">Tool inputs stay in your browser</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">
                     We do not collect, store, or transmit any passwords, hashes, or inputs you enter into our tools. All processing happens in your browser.
                   </p>
@@ -97,9 +97,11 @@ export default function AboutPage() {
               <div className="flex items-start gap-3">
                 <Lock size={18} className="text-emerald-400 mt-0.5 shrink-0" />
                 <div>
-                  <h3 className="text-slate-200 font-semibold text-sm mb-1">No cookies or tracking</h3>
+                  <h3 className="text-slate-200 font-semibold text-sm mb-1">Analytics and advertising</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">
-                    We do not use advertising cookies or cross-site tracking. Anonymous analytics (page views only) may be collected via Vercel Analytics to help us improve the site.
+                    We count page views with Vercel Analytics, and the site is supported by ads from Google AdSense, which uses cookies. Read the full{' '}
+                    <Link href="/privacy" className="text-blue-400 hover:text-blue-300 underline">Privacy Policy</Link>{' '}
+                    for details and how to opt out of personalized ads.
                   </p>
                 </div>
               </div>
@@ -137,6 +139,14 @@ export default function AboutPage() {
                 NIST SP 800-63B
               </a>
               . We update our guidance as standards evolve.
+            </p>
+          </section>
+
+          <section className="bg-slate-900 border border-slate-700 rounded-xl p-6 space-y-2">
+            <h2 className="text-xl font-bold text-slate-100">Get in Touch</h2>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              Found a bug or an outdated recommendation? Visit the{' '}
+              <Link href="/contact" className="text-blue-400 hover:text-blue-300 underline">contact page</Link>.
             </p>
           </section>
 
