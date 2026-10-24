@@ -57,3 +57,4 @@ When Brief 2 (72-byte limit) and Brief 6 (database storage) are published, link 
 ## Also found while drafting (separate from this article)
 - `how-many-bcrypt-rounds.mdx` contains benchmark numbers presented as measured output ("A typical output on a 2026 cloud instance…") and GPU guess rates (about 3,000/s at cost 12; about 10 billion/s for MD5) without a source. Under the content rules, these should be sourced, reproduced or removed in the refresh.
 - `bcrypt-nodejs-tutorial.mdx` tells readers to install `@types/bcryptjs`. bcryptjs 3 ships its own types, so this step is outdated.
+- When this article is published, add a link to it from the "Thinking the cost must match" mistake in `how-many-bcrypt-rounds.mdx` (removed for now so the live post doesn't link to a draft).

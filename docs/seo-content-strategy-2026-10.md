@@ -1,6 +1,6 @@
 # BcryptGenerator.org — SEO Content Strategy (October 2026)
 
-Status: **Research complete. Awaiting topic approval before any article is written.**
+Status: **Topics approved 2026-10-24. Revised 2026-10-25 with Search Console data (Part 9b): topic #10 changed from htpasswd to Flask-Bcrypt vs Werkzeug.**
 Prepared: 2026-10-24. All drafts produced from this plan must be fact-checked, code-tested and approved by a human editor (Shahzeb Zafar) before publication.
 
 > **Data integrity note.** No keyword tool (Ahrefs, Semrush, Keyword Planner, DataForSEO) was available. Every search volume and keyword difficulty in this document is marked **Not verified (NV)**. Demand evidence comes from two real sources:
@@ -149,9 +149,9 @@ Ranking weighs relevance, observed demand signals (Autocomplete breadth), the we
 | 7 | Bcrypt vs SHA-256 for Passwords | bcrypt vs sha256 | `/blog/bcrypt-vs-sha256` | Core comparison; vendor-dominated results; links both tools |
 | 8 | Bcrypt in Spring Boot: BCryptPasswordEncoder Done Right | bcrypt spring boot | `/blog/bcrypt-spring-boot` | Strong AC; results are outdated and miss CVE-2025-22228 |
 | 9 | Bcrypt in Go with golang.org/x/crypto/bcrypt | bcrypt golang | `/blog/bcrypt-golang` | Strong AC; thin results; completes the language cluster |
-| 10 | Bcrypt Passwords for htpasswd, nginx and Apache | htpasswd bcrypt | `/blog/htpasswd-bcrypt` | Distinct intent; contradictory results; sysadmin audience; possible future `$2y$` generator option |
+| 10 | Flask-Bcrypt vs Werkzeug: Which Should Hash Your Passwords? | flask bcrypt | `/blog/flask-bcrypt-vs-werkzeug` | Seen in our own Search Console data (several Flask-Bcrypt/Werkzeug queries, including a direct "which is best" question); tested findings no competitor covers. Replaces htpasswd, which showed no Search Console signal |
 
-**Backlog (next wave):** bcrypt vs bcryptjs (Node), bcrypt in C#/.NET (BCrypt.Net-Next), bcrypt vs scrypt vs PBKDF2, bcrypt in Rust, migrating legacy MD5/SHA-1 hashes (would need the PHP post's section trimmed first), peppering.
+**Backlog (next wave):** htpasswd/nginx basic auth (moved from #10), bcrypt vs bcryptjs (Node), bcrypt in C#/.NET (BCrypt.Net-Next), bcrypt vs scrypt vs PBKDF2, bcrypt in Rust, migrating legacy MD5/SHA-1 hashes (would need the PHP post's section trimmed first), peppering.
 
 ### Topic detail tables
 
@@ -227,7 +227,7 @@ Ranking weighs relevance, observed demand signals (Autocomplete breadth), the we
 | Audience | Developers migrating between stacks (PHP→Node, etc.) |
 | Angle | Plain-English history with the two bugs (2011 crypt_blowfish 8-bit bug; 2014 OpenBSD length wraparound); per-library accept/produce table; when rewriting `$2y$`→`$2b$` is safe and when it isn't (`$2x$`) |
 | Word count | ~1,200–1,500 |
-| Internal links | `/verify` (anatomy section), `/blog/bcrypt-php-tutorial`, `/blog/htpasswd-bcrypt`, `/blog/bcrypt-compare-returns-false` |
+| Internal links | `/verify` (anatomy section), `/blog/bcrypt-php-tutorial`, `/blog/bcrypt-compare-returns-false` |
 
 #### 6. How to Store Bcrypt Hashes in MySQL and PostgreSQL
 | Field | Detail |
@@ -286,19 +286,20 @@ Ranking weighs relevance, observed demand signals (Autocomplete breadth), the we
 | Word count | ~1,300–1,600 |
 | Internal links | `/`, `/verify`, `/blog/bcrypt-72-byte-limit`, `/blog/how-many-bcrypt-rounds` |
 
-#### 10. Bcrypt Passwords for htpasswd, nginx and Apache
+#### 10. Flask-Bcrypt vs Werkzeug
 | Field | Detail |
 |---|---|
-| Primary keyword | htpasswd bcrypt |
-| Secondary | nginx htpasswd bcrypt, apache htpasswd bcrypt, htpasswd -B, basic auth bcrypt, htpasswd bcrypt cost |
-| Long-tail | htpasswd -B -C 12 · does nginx support bcrypt htpasswd · htpasswd bcrypt docker · traefik basic auth bcrypt · htpasswd bcrypt 2y |
-| Intent | How-to |
+| Primary keyword | flask bcrypt |
+| Secondary | flask_bcrypt, flask-bcrypt, werkzeug generate_password_hash, werkzeug check_password_hash, flask password hashing |
+| Long-tail | flask-bcrypt generate_password_hash check_password_hash · flask bcrypt vs werkzeug security · flask-bcrypt password longer than 72 bytes · werkzeug scrypt hash length · migrate flask-bcrypt to werkzeug |
+| Intent | Informational / comparison |
+| Evidence | Search Console (Part 9b): "flask bcrypt", "flask_bcrypt", "bcrypt flask", three "flask-bcrypt … documentation" variants, and a 9-impression question asking whether Flask-Bcrypt and Werkzeug are the same and which is best |
 | Volume / KD | NV / NV |
-| Ranking opportunity | Results contradict each other on nginx support |
-| Audience | DevOps / sysadmins |
-| Angle | Official docs for Apache `htpasswd` and nginx `auth_basic_user_file`; how to test whether your nginx build accepts bcrypt; cost trade-offs for per-request basic auth (every request re-verifies, so high cost hurts throughput) |
-| Word count | ~1,100–1,400 |
-| Internal links | `/blog/bcrypt-2a-2b-2y`, `/`, `/verify`, `/blog/how-many-bcrypt-rounds` |
+| Ranking opportunity | We already get impressions (positions 28–45) without a dedicated page |
+| Audience | Flask developers |
+| Angle | Tested behaviour (2026-10-25: Flask 3.1.3, Flask-Bcrypt 1.0.1, Werkzeug 3.1.9, bcrypt 5.0.0): Flask-Bcrypt returns `bytes`; with bcrypt 5.0 it **raises ValueError for passwords over 72 bytes** unless `BCRYPT_HANDLE_LONG_PASSWORDS` is set, which pre-hashes and makes existing hashes stop verifying; Werkzeug defaults to **scrypt** (`scrypt:32768:8:1`, 162-char hashes) and its pbkdf2 option uses 1,000,000 iterations; Werkzeug can't verify bcrypt hashes, so switching needs a migration |
+| Word count | ~1,300–1,600 |
+| Internal links | `/blog/bcrypt-python-tutorial`, `/`, `/verify`, `/blog/bcrypt-vs-argon2` |
 
 ---
 
@@ -506,24 +507,26 @@ Common to every brief:
 
 **D. Sources:** `pkg.go.dev/golang.org/x/crypto/bcrypt`; the Go crypto commit introducing the 72-byte rejection.
 
-### Brief 10 — Bcrypt for htpasswd, nginx and Apache
+### Brief 10 — Flask-Bcrypt vs Werkzeug
 **A. Metadata**
-- SEO title: `htpasswd with Bcrypt for nginx and Apache Basic Auth` (≈51)
-- Meta: `Create bcrypt htpasswd entries with htpasswd -B, choose a sensible cost for basic auth, and check whether your nginx build supports bcrypt.` (≈140)
-- Slug `htpasswd-bcrypt`
+- SEO title: `Flask-Bcrypt vs Werkzeug: Which to Use for Passwords` (≈52)
+- Meta: `Flask-Bcrypt and Werkzeug both hash passwords in Flask, but differently. Compare algorithms, defaults and pitfalls, and see how to migrate between them.` (≈150)
+- Slug `flask-bcrypt-vs-werkzeug`
 
 **B. Structure**
-- H1: Using Bcrypt Passwords with htpasswd, nginx and Apache
-- H2 Create an entry (`htpasswd -B -C 12 file user`; avoid `-b` in shared shells)
-- H2 Apache configuration (`AuthUserFile`)
-- H2 nginx configuration (`auth_basic_user_file`; support depends on the system `crypt()`; how to test it)
-- H2 Picking a cost for basic auth (every request is verified → throughput trade-off)
-- H2 Docker / Traefik / Kubernetes ingress notes (`$` escaping)
-- H2 Troubleshooting 401s
+- H1: Flask-Bcrypt vs Werkzeug: Which Should Hash Your Passwords?
+- Intro: the direct answer. They are different libraries with different algorithms; both are acceptable; how to choose
+- H2 What each one is (Flask-Bcrypt: an extension wrapping pyca/bcrypt; Werkzeug's `generate_password_hash`: ships with Flask, defaults to scrypt)
+- H2 Side-by-side (algorithm, default cost/parameters, output type and length, long-password behaviour, maintenance)
+- H2 Using Flask-Bcrypt correctly (bytes vs str storage, rounds config)
+- H2 The 72-byte change in bcrypt 5.0 (tested `ValueError`; what `BCRYPT_HANDLE_LONG_PASSWORDS` does and why it isn't a drop-in fix)
+- H2 Using Werkzeug's helpers correctly (method strings, column size for 162-char scrypt hashes)
+- H2 Switching between them (dual verification at login, then rehash)
+- H2 Which to choose (decision table)
 
-**C. Unique value:** resolves the contradiction with official docs plus a test procedure; explains the throughput impact of cost; covers container escaping.
+**C. Unique value:** a tested version matrix; the bcrypt 5.0 breaking change for Flask-Bcrypt users; a migration recipe; a direct answer to the question users are actually asking.
 
-**D. Sources:** Apache `htpasswd` manual; nginx `ngx_http_auth_basic_module` docs; Docker Compose interpolation docs.
+**D. Sources:** Flask-Bcrypt docs/PyPI; Werkzeug `werkzeug.security` docs and changelog (default method history); pyca/bcrypt CHANGELOG 5.0.0; OWASP cheat sheet (scrypt and bcrypt parameters).
 
 ---
 
@@ -537,12 +540,12 @@ Common to every brief:
 | 2 72-byte-limit | `/` ("the generator warns when you pass 72 bytes"), vs-argon2, Python tutorial, `/tools/password-strength` | Bytes section, options section | Generator |
 | 3 can-bcrypt-be-decrypted | `/verify` ("test a password guess"), `/` ("generate a replacement hash"), Brief 4, rounds post | "What you need instead" | Both |
 | 4 salt-explained | `/` + `/verify` (demo), rounds post, what-is-bcrypt | "Try it" section first | Both |
-| 5 2a-2b-2y | `/verify` (anatomy), PHP tutorial, Brief 10, Brief 1 | History and compatibility | Checker |
+| 5 2a-2b-2y | `/verify` (anatomy), PHP tutorial, Brief 1 | History and compatibility | Checker |
 | 6 store-bcrypt-hash-database | Brief 1, vs-argon2 ("longer Argon2 hashes"), `/verify` | Short answer, fixing truncation | Checker |
 | 7 bcrypt-vs-sha256 | `/tools/sha256`, `/`, vs-argon2, Brief 2 | Table, "where SHA-256 is right" | SHA-256 tool + generator |
 | 8 spring-boot | `/`, `/verify`, Brief 2, rounds post | Strength and errors | Generator (test fixtures) |
 | 9 golang | `/`, `/verify`, Brief 2, rounds post | Cost and errors | Generator |
-| 10 htpasswd | Brief 5, `/`, `/verify`, rounds post | Create entry and cost | Generator |
+| 10 flask-bcrypt-vs-werkzeug | Python tutorial, `/`, `/verify`, vs-argon2 | Side-by-side and migration | Generator |
 
 **Existing pages to update as each article goes live:**
 - `/verify` "Why a bcrypt check fails" → add "Full troubleshooting guide →" to Brief 1 (keep the list short, so the tool page stays tool-focused)
@@ -560,7 +563,7 @@ Common to every brief:
 | 1–2 | #1 compare-returns-false, #2 72-byte-limit | Add internal links from `/verify` and all three tutorials; refresh the Python tutorial for pyca 5.0; request indexing for each new URL |
 | 3–4 | #6 store-bcrypt-hash-database, #3 can-bcrypt-be-decrypted | Link #6 ↔ #1; check Search Console coverage for #1–#2 |
 | 5–6 | #4 salt-explained, #5 2a-2b-2y | Trim `what-is-bcrypt` sections and link out |
-| 7–8 | #7 bcrypt-vs-sha256, #10 htpasswd-bcrypt | Link `/tools/sha256` → #7 |
+| 7–8 | #7 bcrypt-vs-sha256, #10 flask-bcrypt-vs-werkzeug | Link `/tools/sha256` → #7 |
 | 9–10 | #8 spring-boot, #9 golang | Language cluster complete; cross-link tutorials |
 | 11–13 | No new topics. Measure, refresh, then pick backlog items using real Search Console query data | Update titles/descriptions where CTR is low; expand sections that get impressions for queries we don't yet answer |
 
@@ -636,3 +639,19 @@ Common to every brief:
 1. **Approve, edit or reorder the 10 topics** (Part 4).
 2. Optionally connect a keyword dataset (Search Console query data after 4–6 weeks is free and the most reliable; DataForSEO or Keyword Planner if available) to replace the NV fields.
 3. After approval, draft Topic #1 with all code executed. Deliver it as an MDX file for your review; nothing is published without your sign-off.
+
+---
+
+## PART 9b — Search Console evidence (added 2026-10-25)
+
+Query export pasted by the site owner on 2026-10-24 (date range not stated; Search Console's default is 3 months). Small numbers, average positions; treat as direction.
+
+| Signal | Queries (impressions @ avg position) | Action |
+|---|---|---|
+| Page-2 informational head term | what is bcrypt (154 @ 13.4), what is bcrypt? (8 @ 10.8), bcrypt meaning (19 @ 12.5), bcrypt definition (5 @ 14.6), what is bcrypt used for (7 @ 27), how does bcrypt work (9 @ 40) | Refresh `what-is-bcrypt` (done in draft, 2026-10-25) |
+| Already page 1 | bcrypt rounds (24 @ 7.3), bcrypt_rounds (4 @ 8.3), bcrypt salt rounds (5 @ 21.6) | Refresh rounds post; remove unsourced numbers (done in draft) |
+| Tool head terms far back | bcrypt (296 @ 66), bcrypt hash generator (143 @ 44), bcrypt generator (124 @ 50) | Time, indexing, links; no content quick fix |
+| Validates plan | Go cluster ≈19; decrypt/encrypt cluster; "what is the $2 b password?" (8); bcrypt compare; max password length; bcryptpasswordencoder online (5 @ 4.0); mysql bcrypt | Keep topics #1–#9 |
+| New: Flask | flask bcrypt, flask_bcrypt, bcrypt flask, flask-bcrypt … documentation ×3, Flask-Bcrypt vs Werkzeug question (9) | New topic #10 |
+| New: Laravel | laravel bcrypt password generator, bcrypt generator laravel, laravel (password) hash generator, laravel bcrypt, "this password does not use the bcrypt algorithm." | Laravel note on homepage and PHP post |
+| Ignore | Typos (bycrypt, bycrpt, …), one-off long-tail | No pages for misspellings |
