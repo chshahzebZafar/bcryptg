@@ -3,7 +3,7 @@ title: 'Why bcrypt.compare() Returns False (and How to Fix It)'
 seoTitle: 'bcrypt.compare() Returns False? 10 Causes and Fixes'
 description: 'Login failing even with the right password? Work through the real reasons bcrypt compare returns false in Node, PHP and Python, with a fix for each.'
 date: '2026-10-24'
-lastModified: '2026-10-24'
+lastModified: '2026-10-26'
 tags: ['bcrypt', 'troubleshooting', 'nodejs', 'php', 'python']
 readingTime: '9 min read'
 ---
@@ -143,7 +143,7 @@ const normalized = storedHash.replace(/^\$2y\$/, '$2b$')
 const ok = await bcrypt.compare(password, normalized)
 ```
 
-Alternatively, switch to `bcryptjs`, which accepts all three prefixes. The reverse direction works without changes: PHP's `password_verify()` verified hashes made in Node.
+Alternatively, switch to `bcryptjs`, which accepts all three prefixes. The reverse direction works without changes: PHP's `password_verify()` verified hashes made in Node. Laravel is the exception: by default it rejects `$2b$` hashes with "This password does not use the Bcrypt algorithm", which our [PHP and Laravel guide](/blog/bcrypt-php-tutorial) explains how to fix.
 
 ## 8. The hash was never loaded
 

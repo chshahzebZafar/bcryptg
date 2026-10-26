@@ -1,193 +1,188 @@
 ---
-title: 'Bcrypt in PHP — password_hash() & password_verify() Guide'
-description: 'Learn how to hash and verify passwords with bcrypt in PHP using password_hash() and password_verify(). Covers Laravel, migration from MD5, and best practices.'
+title: 'Bcrypt in PHP: password_hash() and password_verify() Done Right'
+seoTitle: 'Bcrypt in PHP: password_hash() & password_verify() Guide'
+description: 'Bcrypt in PHP, tested on PHP 8.0 and 8.5: the 8.4 cost change, 72-byte and null-byte pitfalls, Laravel $2y$ errors, and a safe MD5 migration.'
 date: '2026-02-01'
-lastModified: '2026-10-24'
+lastModified: '2026-10-26'
 tags: ['bcrypt', 'php', 'tutorial', 'laravel']
-readingTime: '7 min read'
+readingTime: '11 min read'
 ---
 
-## PHP Has Bcrypt Built In
-
-Since PHP 5.5, bcrypt is available as a built-in function. No external library is required:
+PHP has bcrypt built in, so you don't need a library. Two functions do almost all the work:
 
 ```php
-// Hash a password
-$hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
-
-// Verify a password
-$valid = password_verify($password, $hash);
-```
-
-This is the only correct way to hash passwords in PHP. Never use `md5()`, `sha1()`, or `crypt()` for passwords.
-
-## password_hash()
-
-```php
-<?php
-
-$password = 'mySecurePassword123!';
-
-// Basic usage (cost defaults to 10 — increase to 12 minimum)
-$hash = password_hash($password, PASSWORD_BCRYPT);
-
-// Recommended — explicit cost of 12
-$hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
-
-echo $hash;
-// $2y$12$LQv3c1yqBWVHxkd0LHAkCO...
-```
-
-**Important:** PHP uses `$2y$` (not `$2b$`) as the version identifier, but this is fully compatible with bcrypt implementations in other languages.
-
-## password_verify()
-
-```php
-<?php
-
-$password = 'mySecurePassword123!';
-$hash = '$2y$12$LQv3c1yqBWVHxkd0LHAkCO...';
+$hash = password_hash($password, PASSWORD_DEFAULT);
 
 if (password_verify($password, $hash)) {
-    echo 'Password is correct';
-} else {
-    echo 'Invalid password';
+    // correct password
 }
 ```
 
-`password_verify()` is timing-attack safe — it uses a constant-time comparison.
+That's enough to get started. The rest of this guide covers the details that actually cause problems in production: which version of PHP changed what, how long a password can be, what goes wrong with peppers, how to upgrade old hashes, and how to get away from MD5. Every example was run on PHP 8.0.30 and PHP 8.5.12.
+
+## Hashing with password_hash()
+
+```php
+$hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+```
+
+`password_hash()` generates a random salt for you and returns a 60-character string like this one:
+
+```
+$2y$12$ISHee6aytH3uxUNZgjFAj.m6J4/CcIb/N77F0NJ/Nr.WCVU/SqWU6
+```
+
+That's a real hash of `correct horse battery staple`. You can check it in the [bcrypt checker](/verify). The `$2y$` prefix is PHP's name for bcrypt, `12` is the cost, and the salt is stored inside the hash, so there's nothing else to save. Don't pass your own salt: PHP 8.0 and later ignore the `salt` option.
+
+### PASSWORD_DEFAULT or PASSWORD_BCRYPT?
+
+In every current PHP version, both constants mean bcrypt. The difference is intent:
+
+- **`PASSWORD_DEFAULT`** means "whatever PHP currently recommends". If PHP ever changes its default algorithm, your new hashes follow automatically.
+- **`PASSWORD_BCRYPT`** pins bcrypt explicitly.
+
+Use `PASSWORD_DEFAULT` unless you have a reason to pin. Either way, `password_verify()` keeps working with every hash you've already stored.
+
+### The default cost changed in PHP 8.4
+
+If you don't pass a `cost`, PHP picks one for you, and the default changed:
+
+| PHP version | Default cost | Notes |
+|---|---|---|
+| 8.3 and earlier | 10 | We measured 10 on PHP 8.0.30 |
+| 8.4 and later | 12 | [Changed in PHP 8.4](https://www.php.net/manual/en/function.password-hash.php); we measured 12 on PHP 8.5.12 |
+
+The PHP team's [RFC for the change](https://wiki.php.net/rfc/bcrypt_cost_2023) measured cost 12 at roughly 160–330 ms per hash on a range of CPUs. Setting `['cost' => 12]` explicitly gives you the same behaviour on every version. See [how many bcrypt rounds to use](/blog/how-many-bcrypt-rounds) if you're choosing a different value.
+
+### Make the column 255 characters
+
+A bcrypt hash is always 60 characters, but don't size the column for exactly that. The [PHP manual](https://www.php.net/manual/en/function.password-hash.php) recommends a column that can grow, and suggests 255. If you later move to Argon2id, its hashes were 97 characters in our tests, and a `CHAR(60)` column would silently cut them off.
+
+```sql
+password_hash VARCHAR(255) NOT NULL
+```
+
+## Checking a password with password_verify()
+
+```php
+if (password_verify($password, $user['password_hash'])) {
+    // log the user in
+}
+```
+
+`password_verify()` reads the algorithm, cost and salt from the stored hash, so you never pass them yourself, and it compares the result in constant time. It also accepts hashes from other languages: in our tests it verified `$2b$` and `$2a$` hashes from Node.js and other tools.
 
 If it returns `false` for a password you know is correct, the usual suspects are a truncated `password` column, a hash that was re-hashed on save, or invisible whitespace. See [how to fix bcrypt checks that fail](/blog/bcrypt-compare-returns-false).
 
-## Checking if a Hash Needs Rehashing
-
-As you increase your cost factor, use `password_needs_rehash()` to upgrade old hashes on login:
+To see what's inside a stored hash, use `password_get_info()`:
 
 ```php
-<?php
+$info = password_get_info($hash);
+// $info['algoName'] is 'bcrypt', $info['options']['cost'] is 12
+```
 
-define('BCRYPT_COST', 12);
+## A complete register and login example
 
-function login(string $email, string $password, PDO $db): bool {
-    $user = $db->prepare('SELECT id, hash FROM users WHERE email = ?');
-    $user->execute([$email]);
-    $user = $user->fetch();
+This version handles the details that simple examples skip: a length check, a constant-time response for unknown emails, and upgrading old hashes when your settings change. It uses PDO with prepared statements and was tested against SQLite. The same SQL works on MySQL and PostgreSQL.
 
-    if (!$user || !password_verify($password, $user['hash'])) {
-        return false;
+```php
+const HASH_ALGO = PASSWORD_DEFAULT;
+const HASH_OPTIONS = ['cost' => 12];
+// A real bcrypt hash of a random string, used when the email isn't found
+const DUMMY_HASH = '$2y$12$rf2avQLu/IGkd483xah99uIXqZN0sGUdwYaBCIIE2rE2OguXIv8HK';
+
+function register(PDO $db, string $email, string $password): void
+{
+    if (strlen($password) > 72) {
+        throw new InvalidArgumentException('Password must be 72 bytes or fewer.');
+    }
+    $hash = password_hash($password, HASH_ALGO, HASH_OPTIONS);
+    $stmt = $db->prepare('INSERT INTO users (email, password_hash) VALUES (?, ?)');
+    $stmt->execute([$email, $hash]);
+}
+
+function login(PDO $db, string $email, string $password): ?int
+{
+    $stmt = $db->prepare('SELECT id, password_hash FROM users WHERE email = ?');
+    $stmt->execute([$email]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Check against a dummy hash when the email doesn't exist, so an
+    // unknown email takes as long to reject as a wrong password.
+    $hash = $user ? $user['password_hash'] : DUMMY_HASH;
+    if (!password_verify($password, $hash) || !$user) {
+        return null;
     }
 
-    // Upgrade hash if cost factor has changed
-    if (password_needs_rehash($user['hash'], PASSWORD_BCRYPT, ['cost' => BCRYPT_COST])) {
-        $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => BCRYPT_COST]);
-        $update = $db->prepare('UPDATE users SET hash = ? WHERE id = ?');
-        $update->execute([$newHash, $user['id']]);
+    if (password_needs_rehash($hash, HASH_ALGO, HASH_OPTIONS)) {
+        $update = $db->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
+        $update->execute([password_hash($password, HASH_ALGO, HASH_OPTIONS), $user['id']]);
     }
 
-    return true;
+    return (int) $user['id'];
 }
 ```
 
-## Full Registration & Login Example
+A few things worth noticing:
+
+- **The dummy hash.** Without it, "no such email" returns instantly while "wrong password" takes a few hundred milliseconds, and that difference tells an attacker which emails have accounts. In our test the two cases took about 290 ms and 300 ms. Generate your own dummy hash once with `password_hash(bin2hex(random_bytes(32)), PASSWORD_BCRYPT, ['cost' => 12])`, using the same cost as your real hashes.
+- **`password_needs_rehash()`.** This upgrades old hashes the next time each user logs in, the only moment you have their plain password. In our test, a cost-10 hash was upgraded to cost 12 on the next login. It also handles a future switch of algorithm.
+- **The upgrade happens automatically on PHP 8.4+.** If you call `password_needs_rehash($hash, PASSWORD_DEFAULT)` without options, PHP 8.5 flagged our old cost-10 hashes for upgrade because its default is now 12. PHP 8.0 did not.
+
+## Long passwords: the 72-byte limit
+
+Bcrypt only uses the first 72 **bytes** of a password, and PHP still truncates silently, even in PHP 8.5: a hash of 72 `a`s also matched those 72 `a`s followed by `EXTRA`. The [manual](https://www.php.net/manual/en/function.password-hash.php) warns about this.
+
+Bytes aren't characters. Accented letters take 2 bytes in UTF-8 and emoji take 4, so 19 emoji are already 76 bytes. Use `strlen()`, which counts bytes, not `mb_strlen()`, when you enforce the limit, as the `register()` function above does. If you need to accept longer passphrases, pre-hash them correctly (next section) or use Argon2id.
+
+## Null bytes, peppers and a security fix
+
+A **pepper** is a secret added to every password, kept outside the database. A common way to add one is an HMAC, and this is where PHP can catch you out:
 
 ```php
-<?php
-
-class AuthController {
-    private PDO $db;
-    private int $cost;
-
-    public function __construct(PDO $db) {
-        $this->db = $db;
-        $this->cost = (int) ($_ENV['BCRYPT_COST'] ?? 12);
-    }
-
-    public function register(string $email, string $password): array {
-        // Validate
-        if (strlen($password) < 8) {
-            return ['error' => 'Password must be at least 8 characters'];
-        }
-
-        // Check for existing email
-        $check = $this->db->prepare('SELECT id FROM users WHERE email = ?');
-        $check->execute([$email]);
-        if ($check->fetch()) {
-            return ['error' => 'Email already registered'];
-        }
-
-        // Hash and store
-        $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => $this->cost]);
-        $stmt = $this->db->prepare('INSERT INTO users (email, hash) VALUES (?, ?)');
-        $stmt->execute([$email, $hash]);
-
-        return ['success' => true];
-    }
-
-    public function login(string $email, string $password): bool {
-        $stmt = $this->db->prepare('SELECT id, hash FROM users WHERE email = ?');
-        $stmt->execute([$email]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$user) {
-            // Prevent timing attacks — hash even on failure
-            password_hash('dummy', PASSWORD_BCRYPT, ['cost' => $this->cost]);
-            return false;
-        }
-
-        if (!password_verify($password, $user['hash'])) {
-            return false;
-        }
-
-        // Rehash if needed
-        if (password_needs_rehash($user['hash'], PASSWORD_BCRYPT, ['cost' => $this->cost])) {
-            $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => $this->cost]);
-            $update = $this->db->prepare('UPDATE users SET hash = ? WHERE id = ?');
-            $update->execute([$newHash, $user['id']]);
-        }
-
-        return true;
-    }
-}
+// Risky: a raw binary HMAC can contain null bytes
+$peppered = hash_hmac('sha256', $password, $pepper, true);
 ```
 
-## Laravel Integration
+Older PHP versions treated a null byte as the end of the password, so `password_hash("abc\0def")` produced a hash that also verified for just `"abc"`. We reproduced this on PHP 8.0.30. That behaviour was a vulnerability ([CVE-2024-3096](https://www.php.net/ChangeLog-8.php)) and was fixed in **PHP 8.1.28, 8.2.18 and 8.3.6**. Fixed versions throw instead: on PHP 8.5.12 we got `ValueError: Bcrypt password must not contain null character`.
 
-Laravel handles bcrypt automatically through its `Hash` facade and `bcrypt()` helper:
+That error matters more than you'd expect. In our test, **11.5% of raw HMAC-SHA256 outputs contained a null byte**. On a fixed PHP version, about one user in nine would get an exception at sign-up or login. On an old version, those users' hashes would be silently weakened. Encode the HMAC as text before hashing:
+
+```php
+$peppered = base64_encode(hash_hmac('sha256', $password, $pepper, true));
+$hash = password_hash($peppered, PASSWORD_DEFAULT);
+
+// At login, apply exactly the same steps before password_verify():
+password_verify(base64_encode(hash_hmac('sha256', $input, $pepper, true)), $hash);
+```
+
+The base64 form is 44 bytes, safely under the 72-byte limit, and never contains a null byte. We hashed 3,000 encoded peppers on PHP 8.5 without a single error. If you're still on PHP 8.0 or older, upgrading matters for this fix alone: PHP 8.0 no longer receives security updates.
+
+## Laravel
+
+Laravel uses bcrypt by default through its `Hash` facade:
 
 ```php
 use Illuminate\Support\Facades\Hash;
 
-// Hash
-$hash = Hash::make('myPassword', ['rounds' => 12]);
-// or
-$hash = bcrypt('myPassword');
+$hash = Hash::make($password);
 
-// Verify
-$valid = Hash::check('myPassword', $hash);
+if (Hash::check($password, $hash)) {
+    // correct password
+}
 
-// Check if rehash needed
 if (Hash::needsRehash($hash)) {
-    $hash = Hash::make($password);
-    $user->update(['password' => $hash]);
+    $user->update(['password' => Hash::make($password)]);
 }
 ```
 
-Configure the cost in `config/hashing.php`:
-
-```php
-return [
-    'driver' => 'bcrypt',
-    'bcrypt' => [
-        'rounds' => env('BCRYPT_ROUNDS', 12),
-    ],
-];
-```
+Set the cost with `BCRYPT_ROUNDS` in your `.env` file. It's read by the `bcrypt` section of `config/hashing.php`.
 
 ### Using a hash from another tool or language in Laravel
 
 If you paste in a bcrypt hash created somewhere else, for example by our [bcrypt generator](/) to seed an admin user, or by a Node.js or Python app you're migrating from, check its prefix first.
 
-PHP and Laravel write hashes that start with `$2y$`. Most other tools write `$2b$`. PHP's `password_verify()` accepts both, but Laravel also checks the hash's algorithm by default: the `HASH_VERIFY` setting, `'verify' => true` in the bcrypt section of `config/hashing.php`. That check uses PHP's `password_get_info()`, which only recognizes `$2y$` as bcrypt. So a perfectly valid `$2b$` hash makes `Hash::check()` throw:
+PHP and Laravel write hashes that start with `$2y$`. Most other tools write `$2b$`. PHP's `password_verify()` accepts both, but Laravel also checks the hash's algorithm by default: the `HASH_VERIFY` setting, `'verify' => true` in the bcrypt section of `config/hashing.php`. That check uses PHP's `password_get_info()`, which only recognizes `$2y$` as bcrypt (we confirmed `$2b$` and `$2a$` come back as `unknown`). So a perfectly valid `$2b$` hash makes `Hash::check()` throw:
 
 ```
 RuntimeException: This password does not use the Bcrypt algorithm.
@@ -202,43 +197,62 @@ if (str_starts_with($hash, '$2b$') || str_starts_with($hash, '$2a$')) {
 }
 ```
 
-(Avoid doing this with `preg_replace()`: in its replacement string, `$2` means "capture group 2", so `'$2y$'` silently produces a broken hash.)
+Avoid doing this with `preg_replace()`. In its replacement string, `$2` means "capture group 2", so `'$2y$'` silently produces a broken hash. Or edit the first four characters by hand before inserting the hash into your `users` table.
 
-Or edit the first four characters by hand before inserting the hash into your `users` table.
+## Migrating from MD5 (without waiting for logins)
 
-## Migrating from MD5
+The usual advice, "re-hash each password when the user next logs in", leaves every inactive user's MD5 hash in your database indefinitely. If the database ever leaks, MD5 hashes are fast to crack, especially for common passwords. A better approach upgrades **everyone immediately**, then finishes the job at login.
 
-If you have an existing system with MD5 passwords, migrate progressively on login:
+**Step 1: wrap every MD5 hash in bcrypt, once.** Bcrypt the existing MD5 value itself, so you don't need anyone's password:
 
 ```php
-function loginWithMigration(string $email, string $password, PDO $db): bool {
-    $stmt = $db->prepare('SELECT id, hash, hash_type FROM users WHERE email = ?');
-    $stmt->execute([$email]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$user) return false;
-
-    if ($user['hash_type'] === 'md5') {
-        // Check against MD5 hash
-        if (md5($password) !== $user['hash']) return false;
-
-        // Migrate to bcrypt
-        $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
-        $update = $db->prepare('UPDATE users SET hash = ?, hash_type = "bcrypt" WHERE id = ?');
-        $update->execute([$newHash, $user['id']]);
-        return true;
-    }
-
-    return password_verify($password, $user['hash']);
+$rows = $db->query("SELECT id, password_hash FROM users WHERE hash_type = 'md5'")->fetchAll(PDO::FETCH_ASSOC);
+$update = $db->prepare("UPDATE users SET password_hash = ?, hash_type = 'bcrypt-md5' WHERE id = ?");
+foreach ($rows as $row) {
+    $update->execute([password_hash($row['password_hash'], PASSWORD_DEFAULT), $row['id']]);
 }
 ```
 
-## Summary
+After this runs, no plain MD5 hashes remain, including for users who never come back.
 
-- Use `password_hash($password, PASSWORD_BCRYPT, ['cost' => 12])`
-- Always use `password_verify()` for comparison
-- Use `password_needs_rehash()` to upgrade hashes over time
-- Set cost in environment variable (`BCRYPT_COST`)
-- Never use `md5()`, `sha1()`, or `crypt()` for passwords
+**Step 2: at login, verify the wrapped form, then replace it with a normal hash:**
 
-Try our [Bcrypt Generator](/) to test hash generation, or read our [Node.js tutorial](/blog/bcrypt-nodejs-tutorial).
+```php
+function verifyPassword(PDO $db, array $user, string $password): bool
+{
+    if ($user['hash_type'] === 'bcrypt-md5') {
+        if (!password_verify(md5($password), $user['password_hash'])) {
+            return false;
+        }
+        // Correct password: replace the wrapped hash with a normal one
+        $update = $db->prepare("UPDATE users SET password_hash = ?, hash_type = 'bcrypt' WHERE id = ?");
+        $update->execute([password_hash($password, PASSWORD_DEFAULT), $user['id']]);
+        return true;
+    }
+
+    return password_verify($password, $user['password_hash']);
+}
+```
+
+We tested both steps: after step 1 no MD5 values remained; an active user's next login converted their hash to plain bcrypt; and a dormant account stayed safely wrapped. The SQL uses single-quoted strings, which work in MySQL, PostgreSQL and SQLite alike. MD5's 32-character hex output is well under the 72-byte limit and contains no null bytes, so wrapping it is safe.
+
+## Moving to Argon2id later
+
+PHP also supports Argon2id, which [OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) recommends first for new systems. Whether it's available depends on how PHP was built: check `defined('PASSWORD_ARGON2ID')`. Both PHP builds we tested included it. Switching later is the same rehash-on-login pattern: change `HASH_ALGO` to `PASSWORD_ARGON2ID`, and `password_needs_rehash()` returns `true` for each old bcrypt hash at that user's next login. Existing bcrypt hashes keep verifying in the meantime. That's one more reason for the 255-character column. See [bcrypt vs Argon2](/blog/bcrypt-vs-argon2) for the trade-offs.
+
+## Checklist
+
+- [ ] `password_hash()` and `password_verify()` only, never `md5()`, `sha1()` or your own salt
+- [ ] Cost set explicitly (12 is a good default) or PHP 8.4+ defaults
+- [ ] `password_hash` column is `VARCHAR(255)`
+- [ ] Passwords limited to 72 bytes with `strlen()`, or pre-hashed and encoded
+- [ ] Peppers base64-encoded, never raw binary
+- [ ] `password_needs_rehash()` on every successful login
+- [ ] Unknown emails checked against a dummy hash
+- [ ] PHP version 8.1.28, 8.2.18, 8.3.6 or newer, for the null-byte fix
+- [ ] Laravel: hashes from other tools changed to `$2y$`
+- [ ] Legacy MD5 hashes wrapped in bcrypt, not left waiting for logins
+
+To try things out, generate a hash with the [bcrypt generator](/) and check it with the [bcrypt checker](/verify). For other languages, see the [Node.js](/blog/bcrypt-nodejs-tutorial) and [Python](/blog/bcrypt-python-tutorial) guides.
+
+*Drafted with AI assistance; reviewed and tested by Shahzeb Zafar.*

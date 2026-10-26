@@ -166,7 +166,7 @@ export default function HomePage() {
                   { href: '/blog/bcrypt-vs-argon2', label: 'Bcrypt vs Argon2' },
                   { href: '/blog/how-many-bcrypt-rounds', label: 'How many rounds?' },
                   { href: '/blog/bcrypt-nodejs-tutorial', label: 'Node.js tutorial' },
-                  { href: '/blog/bcrypt-php-tutorial', label: 'PHP tutorial' },
+                  { href: '/blog/bcrypt-php-tutorial', label: 'PHP & Laravel guide' },
                   { href: '/blog/bcrypt-python-tutorial', label: 'Python tutorial' },
                 ].map(({ href, label }) => (
                   <li key={href}>
