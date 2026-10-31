@@ -83,7 +83,12 @@ export default function AboutPage() {
           </section>
 
           <section className="bg-slate-900 border border-slate-700 rounded-xl p-6">
-            <h2 className="text-xl font-bold text-slate-100 mb-4">Privacy Policy</h2>
+            <h2 className="text-xl font-bold text-slate-100 mb-2">Privacy at a Glance</h2>
+            <p className="text-slate-400 text-sm leading-relaxed mb-4">
+              A summary of how we handle data. Read the full{' '}
+              <Link href="/privacy" className="text-blue-400 hover:text-blue-300 underline">Privacy Policy</Link>{' '}
+              for details, or <Link href="/contact" className="text-blue-400 hover:text-blue-300 underline">contact us</Link>.
+            </p>
             <div className="space-y-5">
               <div className="flex items-start gap-3">
                 <ShieldCheck size={18} className="text-emerald-400 mt-0.5 shrink-0" />

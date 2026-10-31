@@ -14,6 +14,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/tools/password-strength`, lastModified: new Date('2026-05-25'), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/blog`,                    lastModified: new Date('2026-05-25'), changeFrequency: 'weekly',  priority: 0.8 },
     { url: `${base}/about`,                   lastModified: new Date('2026-05-25'), changeFrequency: 'yearly',  priority: 0.4 },
+    { url: `${base}/contact`,                 lastModified: new Date('2026-10-31'), changeFrequency: 'yearly',  priority: 0.4 },
+    { url: `${base}/privacy`,                 lastModified: new Date('2026-10-31'), changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${base}/terms`,                   lastModified: new Date('2026-10-31'), changeFrequency: 'yearly',  priority: 0.3 },
     // /api-docs intentionally excluded — marked noindex (coming soon)
   ]
 
