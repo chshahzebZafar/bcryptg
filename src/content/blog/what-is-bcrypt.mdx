@@ -84,7 +84,7 @@ Yes, when it's used properly. There are no known practical attacks against bcryp
 Two caveats are worth knowing:
 
 - **Newer options exist.** OWASP now recommends **Argon2id** first for new systems, and bcrypt for systems where Argon2id isn't available. Argon2id also makes attackers pay in memory, not just computation. See [bcrypt vs Argon2](/blog/bcrypt-vs-argon2).
-- **The 72-byte limit.** Bcrypt only uses the first 72 bytes of a password. Some libraries silently ignore the rest, and newer ones reject longer passwords.
+- **The 72-byte limit.** Bcrypt only uses the first 72 bytes of a password. Some libraries silently ignore the rest, and newer ones reject longer passwords. See [bcrypt's maximum password length](/blog/bcrypt-72-byte-limit) for how to handle it.
 
 ## Bcrypt compared with other hashes
 

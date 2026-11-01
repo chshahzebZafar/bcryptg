@@ -1,0 +1,194 @@
+---
+title: 'Bcrypt Max Password Length: The 72-Byte Limit Explained'
+seoTitle: 'Bcrypt Max Password Length: The 72-Byte Limit Explained'
+description: 'Bcrypt only uses the first 72 bytes of a password. See what Node, PHP, Python (bcrypt 5.0, passlib, FastAPI) and others do with longer input, and how to fix it.'
+date: '2026-11-01'
+lastModified: '2026-11-01'
+tags: ['bcrypt', 'security', 'python', 'nodejs', 'php']
+readingTime: '10 min read'
+---
+
+**Bcrypt's maximum password length is 72 bytes.** Anything after the 72nd byte has no effect on the hash. That much has been true since 1999. What has changed is how libraries react to longer passwords: some still ignore the extra bytes silently, while newer ones refuse them with an error. That's why code that worked for years can suddenly throw `ValueError: password cannot be longer than 72 bytes`.
+
+This guide explains where the limit comes from, why it's measured in bytes rather than characters, exactly what each popular library does (we tested them), and how to handle it safely.
+
+## Why 72 bytes?
+
+Bcrypt is built on the Blowfish cipher, and it feeds the password into Blowfish's key setup. That key setup has room for 18 subkeys of 32 bits each: 576 bits, or 72 bytes. The [original bcrypt paper](https://www.usenix.org/legacy/events/usenix99/provos/provos.pdf) by Provos and Mazières uses the password as that key, so the limit comes with the design.
+
+It isn't a bug, and it doesn't make bcrypt insecure. A 72-byte password is extremely long. It becomes a problem when software assumes every byte of a long input counts, or when a library upgrade changes from silently ignoring extra bytes to rejecting them.
+
+## Bytes, not characters
+
+The limit counts **UTF-8 bytes**. For plain English text, one character is one byte, but that isn't true for everything:
+
+| Text | Characters | UTF-8 bytes |
+|---|---|---|
+| `a` | 1 | 1 |
+| `é` | 1 | 2 |
+| `中` | 1 | 3 |
+| `🔐` | 1 | 4 |
+| 19 × `🔐` | 19 | **76**, already over the limit |
+
+So a password manager phrase in Chinese, or a passphrase with a few emoji, can pass 72 bytes with far fewer than 72 characters. Measure bytes, not characters:
+
+| Language | Byte length of a password |
+|---|---|
+| JavaScript / Node.js | `Buffer.byteLength(password, 'utf8')` |
+| Python | `len(password.encode('utf-8'))` |
+| PHP | `strlen($password)` (not `mb_strlen`) |
+| Go | `len([]byte(password))` |
+
+JavaScript has an extra trap: `password.length` counts UTF-16 code units, which are neither bytes nor characters. For 19 emoji it returns 38, while the real byte count is 76.
+
+## What each library does with longer passwords
+
+We tested the libraries we could run. For the others, the table cites their official documentation.
+
+| Library | Version | Over 72 bytes | Source |
+|---|---|---|---|
+| Node.js `bcrypt` | 6.0.0 | Silently ignored | Tested |
+| Node.js `bcryptjs` | 3.0.3 | Silently ignored; `bcrypt.truncates(pw)` tells you | Tested |
+| PHP `password_hash()` | 8.0.30, 8.5.12 | Silently ignored | Tested; [PHP manual](https://www.php.net/manual/en/function.password-hash.php) |
+| Python `bcrypt` | 4.0.1 | Silently ignored | Tested |
+| Python `bcrypt` | **5.0.0** | **`ValueError`** in `hashpw()` and `checkpw()` | Tested; [changelog](https://github.com/pyca/bcrypt/blob/main/CHANGELOG.rst) |
+| passlib + `bcrypt` 5.0 | passlib 1.7.4 | **`ValueError` even for short passwords** (see below) | Tested |
+| Flask-Bcrypt + `bcrypt` 5.0 | 1.0.1 | `ValueError` | Tested |
+| pwdlib (bcrypt hasher) | 0.3.1 | `ValueError` | Tested |
+| Go `golang.org/x/crypto/bcrypt` | current | `GenerateFromPassword` returns `ErrPasswordTooLong`; `CompareHashAndPassword` still accepts | [Go docs](https://pkg.go.dev/golang.org/x/crypto/bcrypt) |
+| Spring Security `BCryptPasswordEncoder` | patched versions | `IllegalArgumentException` | [CVE-2025-22228](https://spring.io/security/cve-2025-22228) |
+
+Two patterns stand out. The libraries that ignore the extra bytes give no warning, so you only find out with a test. And the move toward rejecting long passwords is recent: Python's `bcrypt` 5.0.0 shipped in September 2025, and Spring changed after a 2025 security advisory.
+
+## "ValueError: password cannot be longer than 72 bytes" in Python and FastAPI
+
+This is the full message from Python's `bcrypt` 5.0:
+
+```
+ValueError: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+```
+
+If you call `bcrypt` directly, it means the password really is over 72 bytes. The fixes are in the next section.
+
+If you use **passlib**, which many FastAPI and Flask tutorials taught for years, the cause is different. Passlib fails on *every* password, even short ones. In our test, this tutorial-style code raised the error for the 28-character password `correct horse battery staple`:
+
+```python
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context.hash("correct horse battery staple")  # ValueError with bcrypt 5.0
+```
+
+The reason is in passlib's own code. The first time it hashes anything, it runs a self-test that checks for an old bcrypt bug, using a 255-byte test password. `bcrypt` 5.0 rejects that test password, so passlib fails before your password is even looked at. You may also see `(trapped) error reading bcrypt version` with `AttributeError: module 'bcrypt' has no attribute '__about__'` in your logs. That's a separate, harmless compatibility warning. Passlib's last release, 1.7.4, came out in October 2020, before either change.
+
+Your options:
+
+1. **Move off passlib (recommended).** FastAPI's own [security tutorial](https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/) now uses **pwdlib** with Argon2id (`pip install "pwdlib[argon2]"`), which also has no 72-byte limit:
+
+   ```python
+   from pwdlib import PasswordHash
+
+   password_hash = PasswordHash.recommended()
+   hashed = password_hash.hash(password)
+   password_hash.verify(password, hashed)
+   ```
+
+   Existing bcrypt hashes still need a bcrypt verifier. FastAPI's tutorial suggests passlib for verifying old hashes while hashing new ones with Argon2, and the upgrade section below shows how to verify old bcrypt hashes with the `bcrypt` package.
+
+2. **Short-term: pin `bcrypt==4.0.1`.** In our test, passlib worked again with it. This only buys time: it brings back silent truncation, and passlib itself is no longer maintained.
+
+## When ignoring bytes becomes a security bug
+
+Silently ignoring bytes past 72 is harmless when the input is just a long password. It becomes dangerous when bcrypt is used to hash something **longer and structured**, where the important part might land after byte 72.
+
+- **Spring Security, [CVE-2025-22228](https://spring.io/security/cve-2025-22228):** `BCryptPasswordEncoder.matches()` returned `true` for passwords over 72 characters when only the first 72 matched. Patched versions now throw instead.
+- **Okta, 2024:** Okta's [advisory](https://trust.okta.com/security-advisories/okta-ad-ldap-delegated-authentication-username/) describes a cache key made by bcrypt-hashing user ID + username + password together. For usernames of 52 characters or more, a cached login could succeed without the correct password. The advisory doesn't spell out the mechanism, but the combination fits the limit: with a long enough user ID and username, the password starts past the bytes bcrypt reads. Okta switched to PBKDF2.
+
+The lesson: only hash a user's password with bcrypt, never a concatenation that puts the password at the end.
+
+## How to handle the limit
+
+### Option 1: enforce a 72-byte maximum
+
+This is the simplest fix and what [OWASP's Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) recommends for bcrypt. Check the byte length at sign-up and password change, and show a clear message:
+
+```js
+function assertBcryptLength(password) {
+  if (Buffer.byteLength(password, 'utf8') > 72) {
+    throw new Error('Password must be 72 bytes or fewer')
+  }
+}
+```
+
+```python
+def check_length(password: str) -> None:
+    if len(password.encode("utf-8")) > 72:
+        raise ValueError("Password must be 72 bytes or fewer")
+```
+
+The PHP version is in our [PHP guide](/blog/bcrypt-php-tutorial). Use a message users understand: "fewer than 72 characters, or fewer if you use emoji or non-Latin letters" is clearer than "bytes".
+
+### Option 2: pre-hash with a pepper
+
+If you want to accept passphrases of any length, hash the password with a secret key first, and give bcrypt that fixed-length result. Do it carefully: OWASP warns that naive pre-hashing is dangerous because raw hash output can contain **null bytes**, which some implementations treat as the end of the password, and because of "password shucking" (attacking an unsalted pre-hash leaked elsewhere). Its recommended construction is `bcrypt(base64(hmac-sha384(password, pepper)))`, with the pepper stored outside the database:
+
+```js
+const crypto = require('crypto')
+const bcrypt = require('bcrypt') // or 'bcryptjs'
+
+// The pepper is a long random secret kept outside the database (env var or secrets manager)
+function prepare(password) {
+  return crypto.createHmac('sha384', process.env.PASSWORD_PEPPER).update(password, 'utf8').digest('base64')
+}
+
+const hash = await bcrypt.hash(prepare(password), 12)
+const ok = await bcrypt.compare(prepare(password), hash)
+```
+
+```python
+import base64, hashlib, hmac, os
+import bcrypt
+
+PEPPER = os.environ["PASSWORD_PEPPER"].encode()
+
+def prepare(password: str) -> bytes:
+    digest = hmac.new(PEPPER, password.encode("utf-8"), hashlib.sha384).digest()
+    return base64.b64encode(digest)  # 64 bytes, no null bytes
+
+hashed = bcrypt.hashpw(prepare(password), bcrypt.gensalt())
+bcrypt.checkpw(prepare(password), hashed)
+```
+
+The base64 result is always 64 bytes, under the limit, and contains no null bytes. In our tests, a 145-byte passphrase verified correctly, and the same passphrase with one character removed did not. Two caveats: the pepper becomes as important as the database (lose it and nobody can log in), and you must apply exactly the same `prepare()` at sign-up and login.
+
+### Option 3: use Argon2id for new systems
+
+Argon2id has no 72-byte limit and is [OWASP's first choice](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) for new systems. In Python, pwdlib's `PasswordHash.recommended()` uses it. See [bcrypt vs Argon2](/blog/bcrypt-vs-argon2) for the trade-offs.
+
+## Upgrading without locking users out
+
+Here's the trap when you move from a library that ignored extra bytes to one that rejects them. Users who chose long passwords years ago have hashes made from the **first 72 bytes**, and the new library now raises an error when they log in.
+
+We reproduced this. A hash created by Python `bcrypt` 4.0.1 from an 87-byte password made `bcrypt` 5.0's `checkpw()` raise `ValueError`. The fix is to do exactly what the old library did, but only when verifying existing hashes:
+
+```python
+def verify_legacy(password: str, stored: bytes) -> bool:
+    # The old library ignored everything after byte 72, so do the same here
+    return bcrypt.checkpw(password.encode("utf-8")[:72], stored)
+```
+
+That verified the user correctly and still rejected a wrong password. After a successful legacy login, re-hash the password with your new scheme (pre-hash or Argon2id) so the workaround is only ever needed once per user. If you also [compare passwords in other places](/blog/bcrypt-compare-returns-false), check them for the same upgrade issue.
+
+## Checklist
+
+- [ ] Your library's behaviour over 72 bytes is known (see the table), not assumed
+- [ ] Sign-up and password change enforce 72 bytes, measured in **bytes**
+- [ ] Or passwords are pre-hashed as `bcrypt(base64(hmac-sha384(password, pepper)))`
+- [ ] bcrypt only ever hashes the password, never `id + username + password`
+- [ ] Python apps on passlib have moved to pwdlib or `bcrypt` directly, or deliberately pinned `bcrypt==4.0.1`
+- [ ] Hashes made by truncating libraries are verified with the first 72 bytes, then re-hashed
+- [ ] New systems consider Argon2id
+
+Want to see the limit in action? The [bcrypt generator](/) warns you as soon as a password passes 72 bytes, and the [bcrypt checker](/verify) shows the cost and version of any hash.
+
+*Drafted with AI assistance; reviewed and tested by Shahzeb Zafar.*

@@ -167,7 +167,7 @@ Put the password preparation in one function and call it from both sign-up and l
 
 bcrypt only reads the first 72 bytes of a password. Older libraries silently ignore the rest. In our tests with Node's `bcrypt` and `bcryptjs`, a password with extra characters after 72 bytes still matched. Newer libraries refuse long input instead: Python's `bcrypt` 5.0.0 raises `ValueError: password cannot be longer than 72 bytes` in both `hashpw` and `checkpw` ([changelog](https://github.com/pyca/bcrypt/blob/main/CHANGELOG.rst)), and Spring Security now throws for passwords over 72 bytes after fixing [CVE-2025-22228](https://spring.io/security/cve-2025-22228).
 
-So a user with a long password, often from a password manager, can be locked out right after a dependency upgrade even though nothing else changed. If logins started failing after an upgrade, check how long the affected users' passwords are in bytes. Our [comparison of bcrypt and Argon2](/blog/bcrypt-vs-argon2) covers why the limit exists and how Argon2id avoids it.
+So a user with a long password, often from a password manager, can be locked out right after a dependency upgrade even though nothing else changed. If logins started failing after an upgrade, check how long the affected users' passwords are in bytes. Our guide to [bcrypt's maximum password length](/blog/bcrypt-72-byte-limit) shows what each library does and how to upgrade without locking anyone out, and our [comparison of bcrypt and Argon2](/blog/bcrypt-vs-argon2) covers how Argon2id avoids the limit.
 
 ## A myth: "the salt rounds must match"
 

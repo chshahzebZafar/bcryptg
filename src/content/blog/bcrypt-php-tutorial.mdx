@@ -133,7 +133,7 @@ A few things worth noticing:
 
 Bcrypt only uses the first 72 **bytes** of a password, and PHP still truncates silently, even in PHP 8.5: a hash of 72 `a`s also matched those 72 `a`s followed by `EXTRA`. The [manual](https://www.php.net/manual/en/function.password-hash.php) warns about this.
 
-Bytes aren't characters. Accented letters take 2 bytes in UTF-8 and emoji take 4, so 19 emoji are already 76 bytes. Use `strlen()`, which counts bytes, not `mb_strlen()`, when you enforce the limit, as the `register()` function above does. If you need to accept longer passphrases, pre-hash them correctly (next section) or use Argon2id.
+Bytes aren't characters. Accented letters take 2 bytes in UTF-8 and emoji take 4, so 19 emoji are already 76 bytes. Use `strlen()`, which counts bytes, not `mb_strlen()`, when you enforce the limit, as the `register()` function above does. If you need to accept longer passphrases, pre-hash them correctly (next section) or use Argon2id. Our [72-byte limit guide](/blog/bcrypt-72-byte-limit) compares how PHP, Node.js and Python handle long passwords.
 
 ## Null bytes, peppers and a security fix
 

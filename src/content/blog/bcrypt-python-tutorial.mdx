@@ -211,7 +211,7 @@ async def register(credentials: UserCredentials):
 
 ## Common Mistakes
 
-If `checkpw()` returns `False`, or raises `ValueError: Invalid salt`, for a password you know is right, see [why bcrypt password checks fail](/blog/bcrypt-compare-returns-false) for the causes and fixes.
+If `checkpw()` returns `False`, or raises `ValueError: Invalid salt`, for a password you know is right, see [why bcrypt password checks fail](/blog/bcrypt-compare-returns-false) for the causes and fixes. If you see `ValueError: password cannot be longer than 72 bytes`, including from passlib or FastAPI code, see [bcrypt's 72-byte limit in Python](/blog/bcrypt-72-byte-limit).
 
 **Forgetting to encode strings to bytes:**
 ```python
