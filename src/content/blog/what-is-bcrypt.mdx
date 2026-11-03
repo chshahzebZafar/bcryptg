@@ -75,7 +75,7 @@ The cost factor also lets bcrypt keep pace with hardware. When computers get fas
 
 ## Is bcrypt encryption?
 
-No. Encryption is two-way: with the right key, you get the original data back. Bcrypt is a one-way hash, so there's no key and no way to turn a hash back into a password. The only way to recover a password from a bcrypt hash is to guess it and check each guess, which bcrypt makes deliberately slow.
+No. Encryption is two-way: with the right key, you get the original data back. Bcrypt is a one-way hash, so there's no key and no way to turn a hash back into a password. The only way to recover a password from a bcrypt hash is to guess it and check each guess, which bcrypt makes deliberately slow. See [can you decrypt a bcrypt hash?](/blog/can-bcrypt-be-decrypted) for what to do instead.
 
 ## Is bcrypt still secure in 2026?
 

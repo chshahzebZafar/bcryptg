@@ -1,0 +1,112 @@
+---
+title: 'Can You Decrypt a Bcrypt Hash? No, and Here Is What Works Instead'
+seoTitle: 'Bcrypt Decrypt Online? Why You Can''t, and What Works'
+description: 'Bcrypt hashes can''t be decrypted, online or with the salt. See what "bcrypt decrypt" sites really do, and how to check, reset or migrate passwords instead.'
+date: '2026-11-03'
+lastModified: '2026-11-03'
+tags: ['bcrypt', 'security', 'password hashing']
+readingTime: '7 min read'
+---
+
+**No, a bcrypt hash can't be decrypted.** Not online, not with the salt, and not with a key, because there is no key. Bcrypt is a one-way hash: it turns a password into a fixed string, and there's no operation that turns that string back. The only way to learn the password behind a bcrypt hash is to guess passwords and check each guess, and bcrypt is deliberately designed to make that slow.
+
+That's usually not what you actually need, though. Below are the things people searching "bcrypt decrypt" are usually trying to do, and how to do each one.
+
+## Is bcrypt encryption or hashing?
+
+**Hashing.** The difference matters:
+
+| | Encryption (e.g. AES) | Hashing (bcrypt) |
+|---|---|---|
+| Reversible? | Yes, with the key | No |
+| Uses a key? | Yes, and it must stay secret | No key at all |
+| Output | Grows with the data | Always 60 characters |
+| Used for | Data you need to read back | Passwords you only need to check |
+
+Encryption is for things your program must read back later, like a stored API token. Passwords should never be stored that way; [OWASP's Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) recommends hashing them with a slow algorithm such as Argon2id or bcrypt. If the server can decrypt them, so can anyone who steals the server's key. With a hash, a stolen database contains nothing to decrypt. See [what bcrypt is and how it works](/blog/what-is-bcrypt) for the full picture.
+
+## What you can read from a bcrypt hash
+
+A bcrypt hash isn't completely opaque. Its first parts are stored in plain view, which is what "bcrypt decoder" tools show you:
+
+```js
+const hash = '$2b$12$RB2qR6GI4quP.PUs6xR5He37dCyunLcYFzlvUfwSX41XkRXgOQ3OS'
+const [, version, cost, rest] = hash.split('$')
+console.log({ version, cost: Number(cost), salt: rest.slice(0, 22), checksum: rest.slice(22) })
+// { version: '2b', cost: 12, salt: 'RB2qR6GI4quP.PUs6xR5He', checksum: '37dCyunLcYFzlvUfwSX41XkRXgOQ3OS' }
+```
+
+That tells you the bcrypt version, the cost (how slow each check is), and the random salt. It does **not** reveal anything about the password. The last 31 characters are the actual hash output. The [bcrypt checker](/verify) shows the same breakdown for any hash you paste.
+
+## "Can I decrypt it with the salt?"
+
+No. The salt isn't a secret or a key; it's stored right inside the hash, as shown above. Its job is to make every hash unique, so that two users with the same password get different hashes and attackers can't use precomputed tables. Having the salt is normal: every attacker who steals a bcrypt database has every salt, and it still doesn't let them reverse anything.
+
+## What "bcrypt decrypt online" sites actually do
+
+Sites offering to "decrypt" bcrypt can only do one thing: **guess**. They take a list of common passwords, hash each one with the salt and cost from your hash, and see whether any result matches. It works only if the password was weak or common, like `password123` or `qwerty`.
+
+Bcrypt makes even that slow on purpose. In the PHP project's [measurements for its 2023 RFC](https://wiki.php.net/rfc/bcrypt_cost_2023), a single cost-12 bcrypt hash took about 160–330 milliseconds on ordinary CPUs. Every guess costs that much again, so trying even a modest list of common passwords takes real time, and a long, random password is out of reach. That's the whole point of bcrypt.
+
+Two warnings:
+
+- **Don't paste real users' hashes into third-party sites.** You're handing someone else material they can try to crack, and possibly the user's email next to it.
+- **"Decrypted" results only mean the password was guessable.** If a site "decrypts" your hash, treat that password as compromised.
+
+## What you probably need instead
+
+### Check whether a password matches a hash
+
+You don't need to decrypt anything. Hash the candidate password with the same salt and compare, which is exactly what every bcrypt library's compare function does:
+
+```js
+const bcrypt = require('bcryptjs')
+console.log(await bcrypt.compare('correct horse battery staple', hash)) // true
+console.log(await bcrypt.compare('password123', hash))                  // false
+```
+
+Or paste the hash and password into the [bcrypt checker](/verify), which does this in your browser. In PHP use `password_verify()`, and in Python `bcrypt.checkpw()`. If a check fails for a password you're sure is right, see [why bcrypt.compare() returns false](/blog/bcrypt-compare-returns-false).
+
+### Reset a forgotten password (including your own admin account)
+
+If you've lost the password to an account you control, you can't recover it, and you don't need to. **Set a new one:** generate a fresh hash and write it over the old one. Generate the hash with any of these one-liners (each produced a working cost-12 hash in our tests):
+
+```bash
+node -e "require('bcryptjs').hash('NewPassword!2026', 12).then(console.log)"
+```
+
+```bash
+php -r "echo password_hash('NewPassword!2026', PASSWORD_BCRYPT, ['cost' => 12]), PHP_EOL;"
+```
+
+```bash
+python -c "import bcrypt; print(bcrypt.hashpw(b'NewPassword!2026', bcrypt.gensalt(12)).decode())"
+```
+
+Or use the [bcrypt generator](/) in your browser. Then save it to the user's row:
+
+```sql
+UPDATE users SET password_hash = '$2b$12$...your new hash...' WHERE email = 'admin@example.com';
+```
+
+Use a real new password rather than the example, and clear it from your shell history afterwards. For other people's accounts, use your app's normal password-reset email flow instead of editing the database.
+
+**Laravel:** Laravel rejects hashes that start with `$2b$` (the Node and Python output) unless you change the first four characters to `$2y$`. The PHP one-liner already produces `$2y$`. Our [PHP and Laravel guide](/blog/bcrypt-php-tutorial) explains why.
+
+### Move users to a new system
+
+Migrating to a new app or framework doesn't require decrypting passwords either. Bcrypt hashes are portable. In our tests, hashes created by PHP, Node.js and Python verified in each other's libraries, so you copy the hashes as they are, and users keep their passwords. The one exception was Node's native `bcrypt` package, which rejected PHP's `$2y$` hashes until the prefix was changed to `$2b$` ([details](/blog/bcrypt-compare-returns-false)). Just make sure the new database column is long enough: a bcrypt hash is 60 characters, and [too-short columns break logins](/blog/bcrypt-hash-length-database).
+
+## Quick answers
+
+**Is bcrypt reversible?** No. There's no reverse function; you can only check guesses.
+
+**Can bcrypt be decrypted with a key?** No. Bcrypt doesn't use a key. If someone gives you a "key" to decrypt bcrypt, they're mistaken or scamming you.
+
+**Can a bcrypt hash be decoded?** Partly. The version, cost and salt are readable (see above), but the password isn't.
+
+**Is bcrypt still secure if attackers get the database?** It holds up well for strong passwords, which is why it's used. Weak passwords can still be guessed, just slowly. See [how many bcrypt rounds to use](/blog/how-many-bcrypt-rounds) for choosing a cost that keeps guessing expensive.
+
+**What about files ending in `.bfe`?** That's a different, older tool that's also called `bcrypt`: a command-line file encrypter built on Blowfish. Those files *can* be decrypted, with the passphrase used to create them. It has nothing to do with password hashes.
+
+*Drafted with AI assistance; reviewed and tested by Shahzeb Zafar.*

@@ -1,0 +1,136 @@
+---
+title: 'Bcrypt Hash Length: How to Store It in MySQL and PostgreSQL'
+seoTitle: 'Bcrypt Hash Length & Column Type for MySQL and Postgres'
+description: 'A bcrypt hash is always 60 characters. Learn the right column type for MySQL and PostgreSQL, why VARCHAR(50) breaks logins, and how to fix a truncated column.'
+date: '2026-11-03'
+lastModified: '2026-11-03'
+tags: ['bcrypt', 'mysql', 'postgresql', 'database']
+readingTime: '8 min read'
+---
+
+**A bcrypt hash is always 60 characters long.** Store it in a `VARCHAR(255)` column in MySQL or MariaDB, or a `text` column in PostgreSQL. Don't size the column for exactly 60, and never smaller: a column that's too short either rejects new sign-ups or silently cuts hashes so those users can never log in again.
+
+## Why a bcrypt hash is 60 characters
+
+Every bcrypt hash has the same fixed layout. This is a real one:
+
+```
+$2b$12$RB2qR6GI4quP.PUs6xR5He37dCyunLcYFzlvUfwSX41XkRXgOQ3OS
+```
+
+| Part | Characters | Example |
+|---|---|---|
+| Version | 4 | `$2b$` |
+| Cost and separator | 3 | `12$` |
+| Salt (16 bytes, encoded) | 22 | `RB2qR6GI4quP.PUs6xR5He` |
+| Hash (23 bytes, encoded) | 31 | `37dCyunLcYFzlvUfwSX41XkRXgOQ3OS` |
+| **Total** | **60** | |
+
+The length never changes with the password or the cost: a 4-character password and a 70-character one both produce 60 characters. It uses only letters, digits, `.`, `/` and `$`, so it's plain ASCII and takes 60 bytes in any character set. The salt is part of the string, so there's nothing else to store. You can see these parts for any hash in the [bcrypt checker](/verify).
+
+## Why VARCHAR(255) instead of CHAR(60)
+
+`CHAR(60)` fits a bcrypt hash exactly, which is the problem: it fits nothing else. If you later move to Argon2id, which OWASP now recommends first for new systems, its hashes are longer. A typical one was 97 characters in our test, and inserting it into a `CHAR(60)` column failed with `Data too long`. The [PHP manual](https://www.php.net/manual/en/function.password-hash.php) gives the same advice for exactly this reason: use a column that can grow, and 255 characters is a good choice.
+
+`VARCHAR(255)` costs nothing extra for a 60-character value, and it lets you change algorithms without a schema migration.
+
+## MySQL and MariaDB
+
+```sql
+CREATE TABLE users (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL
+);
+```
+
+### What happens with a column that's too short
+
+We tested a `VARCHAR(50)` column on MariaDB 10.4, and the outcome depends on the server's SQL mode:
+
+- **Strict mode** (the default in MySQL 5.7 and later, including [MySQL 8.4](https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html), and in our MariaDB): the insert fails with `ERROR 1406 (22001): Data too long for column 'password_hash'`. Sign-ups break, but at least loudly.
+- **Non-strict mode** (common on older servers and some shared hosting): the insert succeeds with only a warning (`1265 Data truncated`), and the stored hash is cut to 50 characters. That user can sign up but will never log in. The hash no longer matches, and the error is easy to miss.
+
+Check which mode your server uses with `SELECT @@SESSION.sql_mode;`. If `STRICT_TRANS_TABLES` isn't in the list, a too-small column truncates silently.
+
+### Collation doesn't matter, as long as you don't compare in SQL
+
+MySQL's default collations are case-insensitive. In our test, an UPPERCASED copy of a hash "matched" the stored one in a `WHERE password_hash = ...` query. That's harmless if you do what you should anyway: fetch the row by email, then verify the password in your application with your bcrypt library. Never look users up by their hash.
+
+### Is there a MySQL bcrypt function?
+
+No. MySQL and MariaDB have no built-in bcrypt function. On MariaDB, `SELECT BCRYPT('x')` fails with `FUNCTION ... BCRYPT does not exist`. Hash passwords in your application, with PHP's `password_hash()`, Node's `bcrypt`, Python's `bcrypt` and so on, and store only the result. That also keeps plain passwords out of SQL statements, where they could end up in query logs.
+
+## PostgreSQL
+
+```sql
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL
+);
+```
+
+Use `text`. The [PostgreSQL documentation](https://www.postgresql.org/docs/current/datatype-character.html) says there's no performance difference between `text`, `varchar(n)` and `char(n)`, and that `char(n)` is usually the slowest because of its padding. PostgreSQL also refuses to store an over-long value in `varchar(n)`, failing with `value too long for type character varying(n)`, unless the value is explicitly cast, in which case it's silently cut off. `text` avoids both problems.
+
+### Can PostgreSQL hash with bcrypt itself?
+
+Yes, with the `pgcrypto` extension. Its `crypt()` function with `gen_salt('bf')` produces bcrypt hashes that are 60 characters long and, according to the [pgcrypto documentation](https://www.postgresql.org/docs/current/pgcrypto.html), limited to 72-byte passwords like every bcrypt:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- set a password (always pass a cost: the default is only 6)
+UPDATE users SET password_hash = crypt('new password', gen_salt('bf', 12)) WHERE id = 1;
+
+-- check a password
+SELECT password_hash = crypt('entered password', password_hash) AS password_ok FROM users WHERE id = 1;
+```
+
+Two warnings. First, `gen_salt('bf')` **defaults to a cost of 6**, far below OWASP's minimum of 10, so always pass a cost such as 12. Second, the plain password travels inside the SQL statement, where statement logging or query monitoring can record it. Hashing in your application is usually the safer design. We didn't have PostgreSQL available to test these two queries; they follow the official documentation.
+
+## ORMs and frameworks
+
+- **Laravel:** `$table->string('password')` creates a `VARCHAR(255)` column by default, which is right.
+- **Django:** the built-in `password` field is 128 characters. Django's bcrypt hasher stores a longer format, `bcrypt_sha256$$2b$...`, which was 74 characters in our test and still fits comfortably.
+- **Prisma:** a plain `String` becomes `text` in PostgreSQL. In MySQL it maps to a limited-length `VARCHAR`, so it's worth checking the generated migration, or add `@db.VarChar(255)` explicitly.
+
+## Fixing a column that already truncated hashes
+
+First, find the damaged rows:
+
+```sql
+SELECT id, email, LENGTH(password_hash) AS len FROM users WHERE LENGTH(password_hash) <> 60;
+```
+
+Then widen the column. In MySQL or MariaDB:
+
+```sql
+ALTER TABLE users MODIFY password_hash VARCHAR(255) NOT NULL;
+```
+
+In PostgreSQL:
+
+```sql
+ALTER TABLE users ALTER COLUMN password_hash TYPE text;
+```
+
+Widening fixes **new** sign-ups only. In our test, rows that had already been cut to 50 characters stayed at 50 after the `ALTER`, because the missing characters are gone for good and can't be recalculated without the original password. Ask those users to reset their password. Once they do, the new hash is stored in full. (If you also see logins failing without truncation, work through [why bcrypt.compare() returns false](/blog/bcrypt-compare-returns-false).)
+
+## What not to store
+
+- **A separate salt column.** The salt is already inside the 60-character hash.
+- **The password itself, or an encrypted copy.** Store only the hash. That way a leaked database never reveals passwords directly. See [why bcrypt hashes can't be decrypted](/blog/can-bcrypt-be-decrypted).
+- **A hash of the hash for lookups.** Look users up by email or username, then verify the password.
+
+## Checklist
+
+- [ ] `password_hash VARCHAR(255)` (MySQL/MariaDB) or `text` (PostgreSQL), `NOT NULL`
+- [ ] Strict SQL mode on, or at least a column long enough that it doesn't matter
+- [ ] No rows where `LENGTH(password_hash) <> 60` (for bcrypt)
+- [ ] Hashing done in the application; if using pgcrypto, always `gen_salt('bf', 12)` or higher
+- [ ] No separate salt column, and no lookups by hash
+
+Need a hash to test your schema with? Create one with the [bcrypt generator](/). Our [PHP](/blog/bcrypt-php-tutorial), [Node.js](/blog/bcrypt-nodejs-tutorial) and [Python](/blog/bcrypt-python-tutorial) guides show the application side.
+
+*Drafted with AI assistance; reviewed and tested by Shahzeb Zafar.*

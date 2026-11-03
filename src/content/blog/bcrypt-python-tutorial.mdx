@@ -1,253 +1,204 @@
 ---
-title: 'Bcrypt in Python — Complete Tutorial with Flask & Django'
-description: 'Learn how to hash and verify passwords with bcrypt in Python. Covers the bcrypt library, Flask-Bcrypt, Django password hashing, and security best practices.'
+title: 'Python Bcrypt Tutorial: hashpw, checkpw and gensalt with Examples'
+seoTitle: 'Python Bcrypt: hashpw, checkpw & gensalt Examples'
+description: 'Hash and check passwords with bcrypt in Python, with tested bcrypt 5.0, Flask, Django and FastAPI examples and fixes for "Invalid salt" errors.'
 date: '2026-02-15'
-lastModified: '2026-05-01'
-tags: ['bcrypt', 'python', 'flask', 'django', 'tutorial']
-readingTime: '8 min read'
+lastModified: '2026-11-03'
+tags: ['bcrypt', 'python', 'flask', 'django', 'fastapi', 'tutorial']
+readingTime: '11 min read'
 ---
 
-## Install bcrypt
+To hash a password with bcrypt in Python, install the [`bcrypt`](https://github.com/pyca/bcrypt) package and use two functions: `hashpw()` to create a hash and `checkpw()` to verify a password against it.
 
 ```bash
 pip install bcrypt
 ```
 
-For Django, bcrypt is already supported — you just need to install it and configure it. For Flask, install `flask-bcrypt`:
+```python
+import bcrypt
+
+password = "correct horse battery staple"
+
+hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+print(hashed)  # b'$2b$12$...'
+
+if bcrypt.checkpw(password.encode("utf-8"), hashed):
+    print("Password is correct")
+```
+
+That's the core of it. This guide covers the details that trip people up: bytes versus strings, the "Invalid salt" error, choosing rounds, storing hashes in a database, and how to do the same in Flask, Django and FastAPI. Every example was run with Python 3.14, `bcrypt` 5.0.0, Flask-Bcrypt 1.0.1, Django 6.1.2 and pwdlib 0.3.1.
+
+## Hashing with hashpw() and gensalt()
+
+`bcrypt.gensalt()` creates a new random salt and records the cost (the number of "rounds") inside it. `bcrypt.hashpw()` then hashes the password with that salt. You never store the salt separately, because it's part of the hash.
+
+```python
+salt = bcrypt.gensalt(rounds=12)                 # cost 12 (the default)
+legacy_salt = bcrypt.gensalt(rounds=12, prefix=b"2a")  # $2a$ for very old systems
+```
+
+In `bcrypt` 5.0 the signature is `gensalt(rounds=12, prefix=b"2b")`, so calling `gensalt()` with no arguments gives cost 12 and the modern `$2b$` format. Each extra round doubles the time a hash takes. See [how many bcrypt rounds to use](/blog/how-many-bcrypt-rounds) for choosing a value.
+
+Hashing the same password twice gives two different results because of the random salt, and that's expected. Never check a password by hashing it again and comparing the strings; always use `checkpw()`.
+
+## Checking a password with checkpw()
+
+```python
+bcrypt.checkpw(password.encode("utf-8"), hashed)  # True or False
+```
+
+**What does `bcrypt.checkpw()` return?** `True` if the password matches the hash, `False` if it doesn't. In our tests it also returned `False`, rather than raising, for a hash cut short by a too-small database column. It raises an exception only when the arguments are the wrong type or the hash is unreadable (see the errors below).
+
+`checkpw()` reads the cost and salt from the stored hash itself, so it works for hashes created with any cost. It also verified a `$2y$` hash created by PHP.
+
+## Store the hash as a string
+
+`hashpw()` returns `bytes`, but most databases and ORMs store text. Decode the hash when you save it and encode it again when you check it. These two helpers do that:
+
+```python
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def check_password(password: str, stored_hash: str) -> bool:
+    return bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8"))
+```
+
+The stored string is always 60 characters: `$2b$12$` followed by 53 more. Give the column room to grow, such as `VARCHAR(255)` or `TEXT`, in case you switch algorithms later. See [how to store bcrypt hashes in MySQL and PostgreSQL](/blog/bcrypt-hash-length-database).
+
+## Fixing common Python bcrypt errors
+
+### TypeError: 'str' object cannot be converted to 'PyBytes'
+
+You passed a `str` where bcrypt expects `bytes`. In `bcrypt` 5.0 the full message is `TypeError: argument 'password': 'str' object cannot be converted to 'PyBytes'`. Add `.encode("utf-8")` to the password, and to the hash if you stored it as text.
+
+### ValueError: Invalid salt
+
+This means the second argument to `checkpw()` isn't a valid bcrypt hash. In our tests the usual causes were:
+
+- **You saved `str(hashed)` instead of `hashed.decode()`.** That stores the literal text `b'$2b$12$...'`, including the `b'` and quotes. Decode instead, and fix any rows already stored this way.
+- **The arguments are swapped.** It's `checkpw(password, hashed)`, password first.
+- **The hash came from Django.** Django stores its own format, for example `bcrypt_sha256$$2b$12$...`, which the plain `bcrypt` library can't read. Use Django's `check_password()` for those hashes.
+
+### ValueError: password cannot be longer than 72 bytes
+
+Since `bcrypt` 5.0, passwords over 72 bytes raise this instead of being silently cut off. If you see it from **passlib** or FastAPI code, even for short passwords, that's a passlib incompatibility. Both are explained, with fixes, in our guide to [bcrypt's maximum password length](/blog/bcrypt-72-byte-limit).
+
+If `checkpw()` returns `False` for a password you know is right, see [why bcrypt password checks fail](/blog/bcrypt-compare-returns-false) for the full list of causes.
+
+## Upgrading old hashes when you raise the cost
+
+The plain `bcrypt` library has no helper to read the cost, but it's the number between the second and third `$`. Check it at login, the one moment you have the plain password, and re-hash if it's below your target:
+
+```python
+def get_cost(stored_hash: str) -> int:
+    return int(stored_hash.split("$")[2])
+
+
+TARGET_COST = 12
+
+def login(password: str, stored_hash: str) -> tuple[bool, str]:
+    if not check_password(password, stored_hash):
+        return False, stored_hash
+    if get_cost(stored_hash) < TARGET_COST:
+        stored_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(TARGET_COST)).decode("utf-8")
+        # save stored_hash to the database here
+    return True, stored_hash
+```
+
+In our test, a cost-10 hash was upgraded to cost 12 on the next successful login, and a wrong password left it untouched.
+
+## Async code: don't block the event loop
+
+A bcrypt hash takes a few hundred milliseconds at cost 12. In an async app (FastAPI, aiohttp and similar), run it in a worker thread so other requests keep moving:
+
+```python
+import asyncio
+
+async def hash_password_async(password: str) -> str:
+    return await asyncio.to_thread(hash_password, password)
+```
+
+## Flask: using Flask-Bcrypt
+
+[Flask-Bcrypt](https://flask-bcrypt.readthedocs.io/) wraps the same `bcrypt` package in a Flask extension:
 
 ```bash
 pip install flask-bcrypt
 ```
 
-## Basic Usage
-
 ```python
-import bcrypt
-
-# Hash a password
-password = b'mySecurePassword123!'  # Must be bytes
-
-salt = bcrypt.gensalt(rounds=12)
-hashed = bcrypt.hashpw(password, salt)
-
-print(hashed)
-# b'$2b$12$LQv3c1yqBWVHxkd0LHAkCO...'
-
-# Verify a password
-is_match = bcrypt.checkpw(password, hashed)
-print(is_match)  # True
-
-is_wrong = bcrypt.checkpw(b'wrongPassword', hashed)
-print(is_wrong)  # False
-```
-
-## Encoding Passwords
-
-Python bcrypt requires bytes. If you receive a string from a form, encode it first:
-
-```python
-import bcrypt
-
-def hash_password(password: str) -> bytes:
-    """Hash a plain-text password."""
-    password_bytes = password.encode('utf-8')
-    salt = bcrypt.gensalt(rounds=12)
-    return bcrypt.hashpw(password_bytes, salt)
-
-def verify_password(password: str, hashed: bytes) -> bool:
-    """Verify a password against its hash."""
-    password_bytes = password.encode('utf-8')
-    return bcrypt.checkpw(password_bytes, hashed)
-```
-
-## Configurable Rounds
-
-```python
-import os
-import bcrypt
-
-BCRYPT_ROUNDS = int(os.environ.get('BCRYPT_ROUNDS', 12))
-
-def hash_password(password: str) -> bytes:
-    password_bytes = password.encode('utf-8')
-    salt = bcrypt.gensalt(rounds=BCRYPT_ROUNDS)
-    return bcrypt.hashpw(password_bytes, salt)
-```
-
-## Flask Integration
-
-Using `flask-bcrypt`:
-
-```python
-from flask import Flask, request, jsonify
+from flask import Flask
 from flask_bcrypt import Bcrypt
-import os
 
 app = Flask(__name__)
-bcrypt = Bcrypt(app)
+app.config["BCRYPT_LOG_ROUNDS"] = 12
+flask_bcrypt = Bcrypt(app)
 
-# Set rounds in config
-app.config['BCRYPT_LOG_ROUNDS'] = int(os.environ.get('BCRYPT_ROUNDS', 12))
-
-# Simulate a database
-users = {}
-
-@app.route('/register', methods=['POST'])
-def register():
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
-
-    if not email or not password:
-        return jsonify({'error': 'Email and password required'}), 400
-
-    if len(password) < 8:
-        return jsonify({'error': 'Password must be at least 8 characters'}), 400
-
-    if email in users:
-        return jsonify({'error': 'Email already registered'}), 409
-
-    hashed = bcrypt.generate_password_hash(password).decode('utf-8')
-    users[email] = {'email': email, 'hash': hashed}
-
-    return jsonify({'message': 'User registered successfully'}), 201
-
-
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
-
-    user = users.get(email)
-    if not user or not bcrypt.check_password_hash(user['hash'], password):
-        return jsonify({'error': 'Invalid credentials'}), 401
-
-    return jsonify({'message': 'Login successful'})
+pw_hash = flask_bcrypt.generate_password_hash("correct horse battery staple").decode("utf-8")
+flask_bcrypt.check_password_hash(pw_hash, "correct horse battery staple")  # True
 ```
 
-## Django Configuration
+Three things to know:
 
-Django supports bcrypt natively. Configure it in `settings.py`:
+- `generate_password_hash()` returns `bytes`, so decode it before saving, as above. `check_password_hash()` accepts the decoded string.
+- Flask-Bcrypt uses the `bcrypt` package underneath, so with `bcrypt` 5.0 it also raises `ValueError` for passwords over 72 bytes. Validate the length first.
+- Its hashes are standard bcrypt. A hash from Flask-Bcrypt verified with the plain `check_password()` helper above, so you can move away from the extension later without resetting anyone's password.
+
+**Flask-Bcrypt or Werkzeug?** Flask already ships with Werkzeug's `generate_password_hash()`, which uses scrypt by default rather than bcrypt. Its hashes are much longer (162 characters in our test). Both are reasonable choices, but their hashes aren't interchangeable.
+
+## Django: enabling bcrypt
+
+Django uses PBKDF2 by default ([Django password docs](https://docs.djangoproject.com/en/stable/topics/auth/passwords/)). To use bcrypt, install `bcrypt` and put Django's bcrypt hasher first in `settings.py`:
 
 ```python
-# settings.py
 PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',  # First = default
-    'django.contrib.auth.hashers.PBKDF2PasswordHasher',        # Fallback
-    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
 ]
 ```
 
-Django then handles everything automatically through `User.set_password()` and `User.check_password()`:
+Keep `PBKDF2PasswordHasher` in the list so existing users can still log in. Django verifies their old hashes and upgrades them to the first hasher when they next sign in. Then use Django's normal `make_password()`, `check_password()` and `User.set_password()`; you don't call `bcrypt` directly.
 
-```python
-from django.contrib.auth.models import User
+`BCryptSHA256PasswordHasher` hashes the password with SHA-256 before bcrypt, which avoids the 72-byte limit. In our test, a 116-byte password verified correctly, and the same password with one character removed was rejected. The stored value looks like `bcrypt_sha256$$2b$12$...` and was 74 characters in our test, well within Django's default 128-character password field.
 
-# Create user with bcrypt hash
-user = User.objects.create_user(
-    username='john',
-    email='john@example.com',
-    password='mySecurePassword123!'  # Hashed automatically
-)
+## FastAPI: use pwdlib
 
-# Verify password
-is_valid = user.check_password('mySecurePassword123!')  # True
+FastAPI's [security tutorial](https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/) now uses [**pwdlib**](https://pypi.org/project/pwdlib/) instead of passlib, which breaks with `bcrypt` 5.0 ([details here](/blog/bcrypt-72-byte-limit)). pwdlib can also verify your existing bcrypt hashes and upgrade them to Argon2id as users log in:
+
+```bash
+pip install "pwdlib[argon2,bcrypt]"
 ```
 
-### Django — Custom Cost Factor
-
 ```python
-# settings.py
-from django.contrib.auth.hashers import BCryptSHA256PasswordHasher
+from pwdlib import PasswordHash
+from pwdlib.hashers.argon2 import Argon2Hasher
+from pwdlib.hashers.bcrypt import BcryptHasher
 
-class CustomBcryptHasher(BCryptSHA256PasswordHasher):
-    rounds = 12  # Override the default
+password_hash = PasswordHash((Argon2Hasher(), BcryptHasher()))
 
-PASSWORD_HASHERS = [
-    'myapp.hashers.CustomBcryptHasher',
-]
+def verify_and_upgrade(password: str, stored_hash: str) -> tuple[bool, str | None]:
+    # Returns (valid, new_hash): new_hash is set when the stored hash should be replaced
+    return password_hash.verify_and_update(password, stored_hash)
 ```
 
-Or use `BCRYPT_COST_FACTOR` if your version supports it:
+New passwords are hashed with the first hasher, Argon2id. In our test, an existing bcrypt hash verified and came back with an Argon2id replacement to save. An Argon2id hash came back with nothing to update, and a wrong password returned `(False, None)`. If you'd rather stay on bcrypt, put `BcryptHasher()` first.
 
-```python
-BCRYPT_COST_FACTOR = 12
-```
+## Encrypt and decrypt passwords in Python?
 
-## Async Usage (FastAPI)
+People often search for "how to encrypt and decrypt a password in Python". For **user passwords you store**, don't encrypt them: hash them with bcrypt (or Argon2id) as shown above. A hash can't be turned back into the password, and that's the point: if the database leaks, there's nothing to decrypt. You only ever check whether a password matches, with `checkpw()`.
 
-```python
-import asyncio
-import bcrypt
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+Encryption, which can be reversed with a key, is for secrets your program must read back later, such as an API key it sends to another service. Use a library like `cryptography` for that, never bcrypt. More on why in [can you decrypt a bcrypt hash?](/blog/can-bcrypt-be-decrypted)
 
-app = FastAPI()
+## Checklist
 
-class UserCredentials(BaseModel):
-    email: str
-    password: str
+- [ ] `hashpw()` to hash, `checkpw()` to verify, never compare two hashes
+- [ ] Encode passwords with `.encode("utf-8")`; store hashes with `.decode("utf-8")`
+- [ ] Cost 12 or more; re-hash at login when you raise it
+- [ ] Passwords limited to 72 bytes, or a framework that pre-hashes (Django's `BCryptSHA256PasswordHasher`)
+- [ ] Hashing runs in `asyncio.to_thread()` in async apps
+- [ ] FastAPI projects use pwdlib, not passlib, with `bcrypt` 5.0
 
-async def hash_password_async(password: str) -> bytes:
-    loop = asyncio.get_event_loop()
-    password_bytes = password.encode('utf-8')
-    salt = bcrypt.gensalt(rounds=12)
-    return await loop.run_in_executor(None, bcrypt.hashpw, password_bytes, salt)
+Try it in your browser: the [bcrypt generator](/) creates hashes in the same `$2b$` format, and the [bcrypt checker](/verify) verifies any hash your code produces. For other languages, see the [Node.js](/blog/bcrypt-nodejs-tutorial) and [PHP](/blog/bcrypt-php-tutorial) guides.
 
-async def verify_password_async(password: str, hashed: bytes) -> bool:
-    loop = asyncio.get_event_loop()
-    password_bytes = password.encode('utf-8')
-    return await loop.run_in_executor(None, bcrypt.checkpw, password_bytes, hashed)
-
-@app.post('/register')
-async def register(credentials: UserCredentials):
-    hashed = await hash_password_async(credentials.password)
-    # Store hashed in database...
-    return {'message': 'User registered'}
-```
-
-`run_in_executor` is important — `bcrypt.hashpw` is blocking, and calling it directly in an async endpoint would block the event loop.
-
-## Common Mistakes
-
-If `checkpw()` returns `False`, or raises `ValueError: Invalid salt`, for a password you know is right, see [why bcrypt password checks fail](/blog/bcrypt-compare-returns-false) for the causes and fixes. If you see `ValueError: password cannot be longer than 72 bytes`, including from passlib or FastAPI code, see [bcrypt's 72-byte limit in Python](/blog/bcrypt-72-byte-limit).
-
-**Forgetting to encode strings to bytes:**
-```python
-# ❌ Wrong
-bcrypt.hashpw('password', salt)  # TypeError
-
-# ✅ Correct
-bcrypt.hashpw('password'.encode('utf-8'), salt)
-```
-
-**Using low rounds in production:**
-```python
-# ❌ Wrong
-salt = bcrypt.gensalt(rounds=4)  # Testing only
-
-# ✅ Correct
-salt = bcrypt.gensalt(rounds=12)
-```
-
-**Comparing strings instead of using checkpw:**
-```python
-# ❌ Wrong — not timing-attack safe
-if stored_hash == bcrypt.hashpw(password.encode(), stored_hash):
-    ...
-
-# ✅ Correct
-if bcrypt.checkpw(password.encode(), stored_hash):
-    ...
-```
-
-## Summary
-
-- Use `bcrypt.gensalt(rounds=12)` minimum for 2026
-- Always encode passwords to bytes with `.encode('utf-8')`
-- Use `bcrypt.checkpw()` for verification (timing-safe)
-- In async frameworks, run bcrypt in a thread executor
-- In Django, configure `BCryptSHA256PasswordHasher` in `PASSWORD_HASHERS`
-
-Try our [Bcrypt Generator](/) to test hashes, or read our guide on [choosing the right number of rounds](/blog/how-many-bcrypt-rounds).
+*Drafted with AI assistance; reviewed and tested by Shahzeb Zafar.*

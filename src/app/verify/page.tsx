@@ -50,7 +50,7 @@ const failureReasons = [
     title: 'The hash was cut off in the database',
     body: (
       <>
-        A bcrypt hash is always exactly 60 characters. A <code>VARCHAR(50)</code> column, or a form field with a length limit, silently truncates it and every check fails. Use <code>CHAR(60)</code>, or <code>VARCHAR(60)</code> or longer.
+        A bcrypt hash is always exactly 60 characters. A <code>VARCHAR(50)</code> column, or a form field with a length limit, either rejects it or silently truncates it, and every check fails. Use <code>VARCHAR(255)</code> (MySQL) or <code>text</code> (PostgreSQL). See the <Link href="/blog/bcrypt-hash-length-database">bcrypt hash length guide</Link>.
       </>
     ),
   },

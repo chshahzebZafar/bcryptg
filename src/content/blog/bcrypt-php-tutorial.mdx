@@ -56,7 +56,7 @@ The PHP team's [RFC for the change](https://wiki.php.net/rfc/bcrypt_cost_2023) m
 
 ### Make the column 255 characters
 
-A bcrypt hash is always 60 characters, but don't size the column for exactly that. The [PHP manual](https://www.php.net/manual/en/function.password-hash.php) recommends a column that can grow, and suggests 255. If you later move to Argon2id, its hashes were 97 characters in our tests, and a `CHAR(60)` column would silently cut them off.
+A bcrypt hash is always 60 characters, but don't size the column for exactly that. The [PHP manual](https://www.php.net/manual/en/function.password-hash.php) recommends a column that can grow, and suggests 255. If you later move to Argon2id, its hashes were 97 characters in our tests, and a `CHAR(60)` column would reject them (or, without MySQL strict mode, silently cut them off). See [bcrypt hash length and column types](/blog/bcrypt-hash-length-database) for MySQL and PostgreSQL details.
 
 ```sql
 password_hash VARCHAR(255) NOT NULL

@@ -99,7 +99,7 @@ The opposite version is worse. `if (bcrypt.compare(...))` without `await` is **a
 
 If the triage showed a hash that isn't exactly 60 clean characters, the data was changed somewhere between `hash()` and your database. In our tests, every one of these returned `false` (or, in Python, raised an error):
 
-- **A column too short.** A `VARCHAR(50)` column silently cuts the hash. Even one missing character means it never verifies. Use `VARCHAR(255)` in MySQL or `text` in PostgreSQL, which also leaves room if you later switch to a longer algorithm such as Argon2id. Find damaged rows with:
+- **A column too short.** A `VARCHAR(50)` column either rejects the hash (MySQL strict mode) or silently cuts it (non-strict mode), and even one missing character means it never verifies. Use `VARCHAR(255)` in MySQL or `text` in PostgreSQL, which also leaves room if you later switch to a longer algorithm such as Argon2id. Our [bcrypt hash length guide](/blog/bcrypt-hash-length-database) covers both databases. Find damaged rows with:
 
   ```sql
   SELECT id, LENGTH(password_hash) FROM users WHERE LENGTH(password_hash) <> 60;
