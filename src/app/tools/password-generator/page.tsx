@@ -91,7 +91,7 @@ export default function PasswordGeneratorPage() {
           <div className="w-9 h-9 bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center">
             <KeyRound size={17} className="text-blue-400" aria-hidden="true" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Password Generator</h1>
+          <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Free Password Generator</h1>
         </div>
         <p className="text-slate-400 mb-8 leading-relaxed">
           Create strong, random passwords or easy-to-remember passphrases. Everything is generated in your browser with a cryptographically secure random number generator, so nothing is sent to a server, saved or logged. No sign-up.
