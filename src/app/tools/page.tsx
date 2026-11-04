@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { BreadcrumbSchema } from '@/components/seo/JsonLd'
-import { ChevronRight, Hash, Shield, Lock } from 'lucide-react'
+import { ChevronRight, Hash, Shield, Lock, KeyRound } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Free Developer Security Tools — Hash Generators & Password Tools',
@@ -57,6 +57,14 @@ const tools = [
     desc: 'Generate SHA-256 hashes using the browser\'s built-in Web Crypto API. Fast and reliable.',
     badge: null,
     badgeColor: '',
+  },
+  {
+    href: '/tools/password-generator',
+    icon: KeyRound,
+    label: 'Password Generator',
+    desc: 'Generate strong random passwords or memorable passphrases, then get a bcrypt hash of them in one click.',
+    badge: 'New',
+    badgeColor: 'bg-emerald-900 text-emerald-300 border border-emerald-700',
   },
   {
     href: '/tools/password-strength',
@@ -132,6 +140,7 @@ export default function ToolsPage() {
                 <tr><td>Check a password against a stored bcrypt hash, or debug a failing login</td><td><Link href="/verify">Bcrypt Checker</Link></td></tr>
                 <tr><td>Fingerprint a file or message, or verify a download</td><td><Link href="/tools/sha256">SHA-256 Generator</Link></td></tr>
                 <tr><td>Match a value from an older system that uses MD5</td><td><Link href="/tools/md5">MD5 Generator</Link></td></tr>
+                <tr><td>Create a strong random password or passphrase</td><td><Link href="/tools/password-generator">Password Generator</Link></td></tr>
                 <tr><td>See how guessable a password is</td><td><Link href="/tools/password-strength">Password Strength Checker</Link></td></tr>
               </tbody>
             </table>

@@ -6,6 +6,7 @@ const tools = [
   { href: '/verify', label: 'Hash Verifier' },
   { href: '/tools/md5', label: 'MD5 Generator' },
   { href: '/tools/sha256', label: 'SHA-256 Generator' },
+  { href: '/tools/password-generator', label: 'Password Generator' },
   { href: '/tools/password-strength', label: 'Password Strength' },
 ]
 

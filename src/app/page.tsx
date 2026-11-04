@@ -64,6 +64,7 @@ const faqs: FAQ[] = [
 const relatedTools = [
   { href: '/tools/md5', label: 'MD5 Generator', desc: 'Generate MD5 hashes and checksums for text' },
   { href: '/tools/sha256', label: 'SHA-256 Generator', desc: 'Generate SHA-256 hashes using Web Crypto API' },
+  { href: '/tools/password-generator', label: 'Password Generator', desc: 'Strong random passwords and passphrases' },
   { href: '/tools/password-strength', label: 'Password Strength', desc: 'Check how strong your password is' },
 ]
 

@@ -23,6 +23,7 @@ export function WebAppSchema() {
       'Code snippets in 7 languages',
       'MD5 and SHA-256 generators',
       'Password strength checker',
+      'Random password and passphrase generator',
     ],
     screenshot: OG_IMAGE,
     contactPoint: {

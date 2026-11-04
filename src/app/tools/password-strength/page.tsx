@@ -134,7 +134,7 @@ export default function PasswordStrengthPage() {
         <article className="prose max-w-none">
           <h2>How to create a strong password</h2>
           <ul>
-            <li>Use a <strong>password manager</strong> to generate and store a long, random, unique password for every site</li>
+            <li>Use a <strong>password manager</strong> to store a long, random, unique password for every site. Our <Link href="/tools/password-generator">password generator</Link> creates one in your browser</li>
             <li>For passwords you must remember, use a <strong>passphrase</strong> of four or more random words</li>
             <li>Turn on <strong>multi-factor authentication</strong> wherever it is offered</li>
             <li>Never reuse a password: one breached site then exposes all the others</li>

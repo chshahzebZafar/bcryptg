@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/tools`,                   lastModified: new Date('2026-05-25'), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/tools/md5`,               lastModified: new Date('2026-05-25'), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/tools/sha256`,            lastModified: new Date('2026-05-25'), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${base}/tools/password-generator`, lastModified: new Date('2026-11-04'), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/tools/password-strength`, lastModified: new Date('2026-05-25'), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/blog`,                    lastModified: new Date('2026-05-25'), changeFrequency: 'weekly',  priority: 0.8 },
     { url: `${base}/about`,                   lastModified: new Date('2026-05-25'), changeFrequency: 'yearly',  priority: 0.4 },
