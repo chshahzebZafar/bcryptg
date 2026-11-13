@@ -12,6 +12,11 @@ import type { BlogPost } from '@/types'
 
 type Props = { params: Promise<{ slug: string }> }
 
+// Frontmatter dates are calendar dates; format in UTC so they never shift a day
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })
+}
+
 export async function generateStaticParams() {
   return getAllSlugs().map(slug => ({ slug }))
 }
@@ -96,9 +101,15 @@ export default async function BlogPostPage({ params }: Props) {
               </Link>
             </span>
             <span>·</span>
-            <time dateTime={post.date}>
-              {new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-            </time>
+            <time dateTime={post.date}>{formatDate(post.date)}</time>
+            {post.lastModified && post.lastModified !== post.date && (
+              <>
+                <span>·</span>
+                <span>
+                  Updated <time dateTime={post.lastModified}>{formatDate(post.lastModified)}</time>
+                </span>
+              </>
+            )}
             <span>·</span>
             <span>{post.readingTime}</span>
           </div>

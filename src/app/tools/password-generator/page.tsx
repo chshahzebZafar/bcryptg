@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { KeyRound, ChevronRight } from 'lucide-react'
-import { BreadcrumbSchema } from '@/components/seo/JsonLd'
+import { BreadcrumbSchema, ToolSchema } from '@/components/seo/JsonLd'
 import { FaqList } from '@/components/ui/FaqList'
 import { PasswordGenerator } from './PasswordGenerator'
 import type { FAQ } from '@/types'
@@ -70,6 +70,12 @@ const faqs: FAQ[] = [
 export default function PasswordGeneratorPage() {
   return (
     <>
+      <ToolSchema
+        name="Password Generator"
+        path="/tools/password-generator"
+        description="Generate strong random passwords and passphrases in your browser, with entropy shown and an optional bcrypt hash."
+        featureList={["Random passwords from 4 to 128 characters","EFF word-list passphrases","Editable symbol set and look-alike filter","Bulk generation of up to 20","One-click bcrypt hash (cost 12)","Cryptographically secure randomness in the browser"]}
+      />
       <BreadcrumbSchema
         items={[
           { name: 'Home', url: 'https://bcryptgenerator.org' },

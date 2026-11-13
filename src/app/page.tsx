@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { BcryptGenerator } from '@/components/tools/BcryptGenerator'
 import { HashVerifier } from '@/components/tools/HashVerifier'
 import { TrustBar } from '@/components/ui/SecurityBadge'
-import { FAQSchema } from '@/components/seo/JsonLd'
+import { FAQSchema, ToolSchema } from '@/components/seo/JsonLd'
 import { FaqList } from '@/components/ui/FaqList'
 import { ROUND_TIMINGS } from '@/lib/bcrypt'
 import type { FAQ } from '@/types'
@@ -71,6 +71,12 @@ const relatedTools = [
 export default function HomePage() {
   return (
     <>
+      <ToolSchema
+        name="Bcrypt Generator"
+        path=""
+        description="Free online bcrypt hash generator. Create bcrypt password hashes with adjustable cost (4–14) entirely in your browser, with code examples in 7 languages."
+        featureList={["Generate bcrypt hashes with cost 4–14","Quick password check against a hash","72-byte password length warning","Code examples in 7 languages","Runs in the browser; nothing sent to a server"]}
+      />
       <FAQSchema faqs={faqs} />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 lg:py-14">

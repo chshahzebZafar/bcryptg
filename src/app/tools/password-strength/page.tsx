@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Shield, ChevronRight } from 'lucide-react'
-import { BreadcrumbSchema } from '@/components/seo/JsonLd'
+import { BreadcrumbSchema, ToolSchema } from '@/components/seo/JsonLd'
 import { FaqList } from '@/components/ui/FaqList'
 import { TipList } from '@/components/ui/TipList'
 import { PasswordStrengthTool } from './PasswordStrengthTool'
@@ -74,6 +74,12 @@ const faqs: FAQ[] = [
 export default function PasswordStrengthPage() {
   return (
     <>
+      <ToolSchema
+        name="Password Strength Checker"
+        path="/tools/password-strength"
+        description="Check how strong a password is with instant feedback, based on length, character variety and common patterns. Runs in your browser."
+        featureList={["Instant strength score","Specific suggestions to improve a password","Runs in the browser; nothing sent to a server"]}
+      />
       <BreadcrumbSchema
         items={[
           { name: 'Home', url: 'https://bcryptgenerator.org' },

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { HashVerifier } from '@/components/tools/HashVerifier'
-import { BreadcrumbSchema } from '@/components/seo/JsonLd'
+import { BreadcrumbSchema, ToolSchema } from '@/components/seo/JsonLd'
 import { FaqList } from '@/components/ui/FaqList'
 import { TipList } from '@/components/ui/TipList'
 import { ChevronRight } from 'lucide-react'
@@ -122,6 +122,12 @@ const faqs: FAQ[] = [
 export default function VerifyPage() {
   return (
     <>
+      <ToolSchema
+        name="Bcrypt Checker"
+        path="/verify"
+        description="Check whether a password matches a bcrypt hash, see the hash version, cost and salt, and debug failed comparisons. Runs in your browser."
+        featureList={["Verify a password against $2a$, $2b$ or $2y$ hashes","Shows version, cost and security rating","Refuses very high costs instead of freezing the tab","Runs in the browser; nothing sent to a server"]}
+      />
       <BreadcrumbSchema
         items={[
           { name: 'Home', url: 'https://bcryptgenerator.org' },

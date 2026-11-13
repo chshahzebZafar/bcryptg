@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Hash, ChevronRight } from 'lucide-react'
-import { BreadcrumbSchema } from '@/components/seo/JsonLd'
+import { BreadcrumbSchema, ToolSchema } from '@/components/seo/JsonLd'
 import { FaqList } from '@/components/ui/FaqList'
 import { TipList } from '@/components/ui/TipList'
 import { SHA256Tool } from './SHA256Tool'
@@ -92,6 +92,12 @@ const faqs: FAQ[] = [
 export default function SHA256Page() {
   return (
     <>
+      <ToolSchema
+        name="SHA-256 Hash Generator"
+        path="/tools/sha256"
+        description="Generate SHA-256 hashes with the browser's Web Crypto API, with test vectors and command-line examples."
+        featureList={["SHA-256 via the Web Crypto API","Test vectors to check results","Runs in the browser; nothing sent to a server"]}
+      />
       <BreadcrumbSchema
         items={[
           { name: 'Home', url: 'https://bcryptgenerator.org' },

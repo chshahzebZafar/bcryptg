@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { WebAppSchema, OrganizationSchema } from '@/components/seo/JsonLd'
+import { WebSiteSchema, OrganizationSchema } from '@/components/seo/JsonLd'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
@@ -78,7 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${jetbrains.variable}`}>
       <head>
-        <WebAppSchema />
+        <WebSiteSchema />
         <OrganizationSchema />
         {/* /favicon.ico comes from src/app/favicon.ico (Next.js adds that link automatically) */}
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

@@ -1,0 +1,37 @@
+# BcryptGenerator.org
+
+> Free, browser-based tools for generating and checking bcrypt password hashes, plus tested developer guides on bcrypt (cost factor, the 72-byte limit, hash length, Node.js, PHP and Python). Every tool runs client-side: passwords and hashes are never sent to a server.
+
+Key facts:
+- A bcrypt hash is always 60 characters, for example `$2b$12$` followed by a 22-character salt and a 31-character hash.
+- Bcrypt only uses the first 72 bytes of a password.
+- A cost factor of 12 is a sensible default for new applications in 2026.
+- Bcrypt is one-way: a hash cannot be decrypted, only checked against a candidate password.
+
+## Tools
+
+- [Bcrypt Generator](https://bcryptgenerator.org/): Hash a password with bcrypt at a chosen cost factor (4–14), in the browser
+- [Bcrypt Checker](https://bcryptgenerator.org/verify): Check whether a password matches a bcrypt hash and see the hash's version, cost and salt
+- [Password Generator](https://bcryptgenerator.org/tools/password-generator): Random passwords and EFF word-list passphrases with entropy shown and an optional bcrypt hash
+- [Password Strength Checker](https://bcryptgenerator.org/tools/password-strength): Instant strength feedback and current NIST SP 800-63B guidance
+- [SHA-256 Hash Generator](https://bcryptgenerator.org/tools/sha256): SHA-256 of UTF-8 text via the Web Crypto API, with test vectors
+- [MD5 Hash Generator](https://bcryptgenerator.org/tools/md5): MD5 of UTF-8 text, with test vectors and reasons hashes don't match
+
+## Guides
+
+- [What Is Bcrypt?](https://bcryptgenerator.org/blog/what-is-bcrypt): How bcrypt works step by step, what it is used for, and whether it is still secure
+- [How Many Bcrypt Rounds?](https://bcryptgenerator.org/blog/how-many-bcrypt-rounds): Measured timings for cost 10–14 and why 12 is the default to use
+- [Bcrypt Max Password Length: the 72-Byte Limit](https://bcryptgenerator.org/blog/bcrypt-72-byte-limit): Why bcrypt truncates at 72 bytes and tested fixes for Python, passlib, FastAPI, Node and PHP
+- [Bcrypt Hash Length in MySQL and PostgreSQL](https://bcryptgenerator.org/blog/bcrypt-hash-length-database): The right column type and how to fix a truncated hash column
+- [Can You Decrypt a Bcrypt Hash?](https://bcryptgenerator.org/blog/can-bcrypt-be-decrypted): Why not, what "bcrypt decrypt" sites really do, and how to check, reset or migrate passwords
+- [Why bcrypt.compare() Returns False](https://bcryptgenerator.org/blog/bcrypt-compare-returns-false): The real causes in Node, PHP and Python, with a fix for each
+- [Bcrypt vs Argon2](https://bcryptgenerator.org/blog/bcrypt-vs-argon2): Differences, OWASP recommendations and when to choose each
+- [Bcrypt in Node.js](https://bcryptgenerator.org/blog/bcrypt-nodejs-tutorial): Hashing and verifying with bcrypt/bcryptjs, async usage and Express
+- [Bcrypt in PHP](https://bcryptgenerator.org/blog/bcrypt-php-tutorial): password_hash() and password_verify(), the PHP 8.4 cost change, Laravel $2y$ errors and MD5 migration
+- [Bcrypt in Python](https://bcryptgenerator.org/blog/bcrypt-python-tutorial): hashpw, checkpw and gensalt with bcrypt 5.0, Flask, Django and FastAPI
+
+## About
+
+- [About and author](https://bcryptgenerator.org/about): Who builds the site (Shahzeb Zafar, software engineer) and how the tools work
+- [All tools](https://bcryptgenerator.org/tools)
+- [Blog index](https://bcryptgenerator.org/blog)

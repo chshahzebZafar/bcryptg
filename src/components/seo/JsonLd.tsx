@@ -5,37 +5,54 @@ const OG_IMAGE = 'https://bcryptgenerator.org/opengraph-image'
 const SITE_URL = 'https://bcryptgenerator.org'
 const SITE_NAME = 'BcryptGenerator.org'
 
-export function WebAppSchema() {
+const ORG_ID = `${SITE_URL}/#organization`
+
+// Site-wide: tells search engines the site's name (used for the site name in results)
+export function WebSiteSchema() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${SITE_URL}/#website`,
+    name: SITE_NAME,
+    alternateName: 'Bcrypt Generator',
+    url: `${SITE_URL}/`,
+    inLanguage: 'en',
+    publisher: { '@id': ORG_ID },
+  }
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+// One per tool page, describing that specific tool
+export function ToolSchema({
+  name,
+  path,
+  description,
+  featureList,
+}: {
+  name: string
+  path: string
+  description: string
+  featureList: string[]
+}) {
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'Bcrypt Generator',
-    url: SITE_URL,
-    description: 'Free online bcrypt hash generator and verifier. Client-side only — no passwords sent to servers.',
+    name,
+    url: `${SITE_URL}${path}`,
+    description,
     applicationCategory: 'DeveloperApplication',
-    operatingSystem: 'Any',
+    operatingSystem: 'Any (runs in the browser)',
+    browserRequirements: 'Requires JavaScript',
+    isAccessibleForFree: true,
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-    featureList: [
-      'Generate bcrypt hashes',
-      'Verify passwords against hashes',
-      'Adjustable salt rounds (4–14)',
-      'Client-side processing — no server round trips',
-      'Code snippets in 7 languages',
-      'MD5 and SHA-256 generators',
-      'Password strength checker',
-      'Random password and passphrase generator',
-    ],
+    featureList,
     screenshot: OG_IMAGE,
-    contactPoint: {
-      '@type': 'ContactPoint',
-      contactType: 'Support',
-      url: `${SITE_URL}/about`,
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: SITE_NAME,
-      url: SITE_URL,
-    },
+    publisher: { '@id': ORG_ID },
   }
   return (
     <script
@@ -141,6 +158,7 @@ export function OrganizationSchema() {
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
+    '@id': ORG_ID,
     name: SITE_NAME,
     url: SITE_URL,
     logo: {
