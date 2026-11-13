@@ -1,8 +1,9 @@
 ---
 title: 'What is Bcrypt? How It Works and What It Is Used For'
-description: 'Bcrypt is a slow, salted password-hashing function. Learn what bcrypt means, what it is used for, how it works step by step, and whether it is still secure.'
+seoTitle: 'What Is Bcrypt and How Does It Work?'
+description: 'Bcrypt is a slow, salted password hash. See how bcrypt works step by step in one diagram, what it is used for, and whether it is still secure in 2026.'
 date: '2026-01-15'
-lastModified: '2026-10-24'
+lastModified: '2026-11-13'
 tags: ['bcrypt', 'password hashing', 'security']
 readingTime: '8 min read'
 ---
@@ -41,6 +42,8 @@ Bcrypt hashing happens in four steps:
 2. **Run the expensive setup.** It sets up the Blowfish cipher using the password and the salt, then repeats that key setup 2^cost times. This repeated setup, known as "Eksblowfish" (expensive key schedule Blowfish), is what makes bcrypt slow.
 3. **Encrypt a fixed string.** It uses the resulting cipher state to encrypt the constant text "OrpheanBeholderScryDoubt" 64 times.
 4. **Pack everything into one string.** The version, cost, salt and result are combined into the 60-character hash you store.
+
+<img src="/blog/how-bcrypt-works.svg" alt="Diagram of how bcrypt works. Hashing: the password and a random 16-byte salt go through an expensive Blowfish key setup repeated 2 to the power of cost times, then encrypt OrpheanBeholderScryDoubt 64 times, and are packed into a 60-character string of version, cost, salt and hash. Checking at login: read the cost and salt from the stored hash, re-run the same steps on the typed password and compare; nothing is decrypted." width="760" height="660" loading="lazy" />
 
 Reading the example hash from left to right:
 

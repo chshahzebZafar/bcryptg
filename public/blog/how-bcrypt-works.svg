@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 660" width="760" height="660" role="img" aria-labelledby="t d">
+  <title id="t">How bcrypt works: hashing a password and checking it at login</title>
+  <desc id="d">Hashing: the password and a new random 16-byte salt go into an expensive Blowfish key setup that repeats 2 to the power of cost times (4,096 times at cost 12). The resulting cipher encrypts the text OrpheanBeholderScryDoubt 64 times. The version, cost, salt and result are packed into one 60-character string such as $2b$12$ followed by the salt and hash. Checking at login: read the version, cost and salt from the stored hash, run the same steps on the typed password, and compare. Equal means the password is correct; nothing is decrypted.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#64748b"/>
+    </marker>
+    <style>
+      text { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+      .mono { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+      .box { fill: #1e293b; stroke: #3b82f6; stroke-width: 1.5; }
+      .in { fill: #0f172a; stroke: #334155; stroke-width: 1.5; }
+      .panel { fill: #0b1222; stroke: #334155; stroke-width: 1.5; stroke-dasharray: 5 4; }
+      .h { fill: #f1f5f9; font-size: 15px; font-weight: 600; }
+      .s { fill: #94a3b8; font-size: 13px; }
+      .step { fill: #60a5fa; font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+      .lane { fill: #94a3b8; font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+      .ln { stroke: #64748b; stroke-width: 1.5; fill: none; marker-end: url(#a); }
+    </style>
+  </defs>
+
+  <rect width="760" height="660" rx="12" fill="#020617"/>
+
+  <text class="lane" x="40" y="38">HASHING (SIGN-UP)</text>
+  <text class="lane" x="480" y="38">CHECKING (LOGIN)</text>
+
+  <!-- Inputs -->
+  <rect class="in" x="40" y="54" width="190" height="62" rx="10"/>
+  <text class="h" x="56" y="80">Password</text>
+  <text class="s mono" x="56" y="101">correct horse…</text>
+  <rect class="in" x="250" y="54" width="190" height="62" rx="10"/>
+  <text class="h" x="266" y="80">Random salt</text>
+  <text class="s" x="266" y="101">16 new bytes, every time</text>
+  <path class="ln" d="M135 116V150"/>
+  <path class="ln" d="M345 116V150"/>
+
+  <!-- Step 1 -->
+  <rect class="box" x="40" y="152" width="400" height="96" rx="10"/>
+  <text class="step" x="58" y="176">STEP 1 · EXPENSIVE KEY SETUP</text>
+  <text class="h" x="58" y="200">Blowfish key schedule, repeated</text>
+  <text class="h" x="58" y="221">2^cost times</text>
+  <text class="s" x="58" y="240">Cost 12 = 4,096 rounds. This is what makes bcrypt slow.</text>
+  <path class="ln" d="M240 248V282"/>
+
+  <!-- Step 2 -->
+  <rect class="box" x="40" y="284" width="400" height="80" rx="10"/>
+  <text class="step" x="58" y="308">STEP 2 · ENCRYPT A FIXED TEXT</text>
+  <text class="h" x="58" y="331">Encrypt "OrpheanBeholderScryDoubt"</text>
+  <text class="s" x="58" y="352">64 times with the resulting cipher</text>
+  <path class="ln" d="M240 364V398"/>
+
+  <!-- Step 3 / output -->
+  <rect class="box" x="40" y="400" width="400" height="128" rx="10"/>
+  <text class="step" x="58" y="424">STEP 3 · PACK INTO ONE STRING (60 CHARS)</text>
+  <text class="mono" x="58" y="456" font-size="15"><tspan fill="#60a5fa">$2b$</tspan><tspan fill="#fbbf24">12$</tspan><tspan fill="#34d399">RB2qR6GI4quP.PUs6xR5He</tspan></text>
+  <text class="mono" x="58" y="478" font-size="15" fill="#e879f9">37dCyunLcYFzlvUfwSX41XkRXgOQ3OS</text>
+  <text class="s" x="58" y="506"><tspan fill="#60a5fa">version</tspan> · <tspan fill="#fbbf24">cost</tspan> · <tspan fill="#34d399">salt (22)</tspan> · <tspan fill="#e879f9">hash (31)</tspan></text>
+  <text class="s" x="58" y="522">Store this one value. The salt is inside it.</text>
+
+  <!-- Login panel -->
+  <rect class="panel" x="470" y="54" width="250" height="474" rx="12"/>
+  <rect class="in" x="488" y="74" width="214" height="78" rx="10"/>
+  <text class="h" x="504" y="100">1. Read the stored hash</text>
+  <text class="s" x="504" y="121">Take version, cost and</text>
+  <text class="s" x="504" y="139">salt from the string</text>
+  <path class="ln" d="M595 152V182"/>
+  <rect class="in" x="488" y="184" width="214" height="96" rx="10"/>
+  <text class="h" x="504" y="210">2. Re-run steps 1–2</text>
+  <text class="s" x="504" y="231">on the password the user</text>
+  <text class="s" x="504" y="249">just typed, with that</text>
+  <text class="s" x="504" y="267">same salt and cost</text>
+  <path class="ln" d="M595 280V310"/>
+  <rect class="in" x="488" y="312" width="214" height="78" rx="10"/>
+  <text class="h" x="504" y="338">3. Compare results</text>
+  <text class="s" x="504" y="359">Equal: correct password</text>
+  <text class="s" x="504" y="377">Different: wrong password</text>
+  <text class="s" x="504" y="430">Nothing is ever decrypted.</text>
+  <text class="s" x="504" y="450">A stolen hash can only be</text>
+  <text class="s" x="504" y="470">attacked by guessing, one</text>
+  <text class="s" x="504" y="490">slow attempt at a time.</text>
+
+  <!-- feed from output to login -->
+  <path class="ln" d="M440 464C455 464 455 113 486 113"/>
+
+  <text class="s" x="40" y="580">Same password + new salt = a completely different hash every time.</text>
+  <text class="s" x="40" y="602">Each +1 to the cost doubles the work, for you and for an attacker.</text>
+  <text class="s" x="40" y="636" fill="#64748b">bcryptgenerator.org</text>
+</svg>
