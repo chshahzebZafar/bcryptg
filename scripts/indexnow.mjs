@@ -21,6 +21,12 @@ async function main() {
     ? args.map(p => (p.startsWith('http') ? p : `${SITE}${p.startsWith('/') ? p : `/${p}`}`))
     : await sitemapUrls()
 
+  // Git Bash on Windows rewrites "/blog/x" into "C:/Program Files/Git/blog/x"; refuse mangled paths
+  const bad = urlList.filter(u => !u.startsWith(`${SITE}/`) && u !== SITE || /^https:\/\/[^/]+\/.*:/.test(u))
+  if (bad.length) {
+    throw new Error(`Invalid URL(s): ${bad.join(', ')}\nIn Git Bash, pass paths without the leading slash (blog/foo) or prefix the command with MSYS_NO_PATHCONV=1.`)
+  }
+
   const keyCheck = await fetch(`${SITE}/${KEY}.txt`)
   if (!keyCheck.ok || (await keyCheck.text()).trim() !== KEY) {
     throw new Error('Key file is not live yet. Deploy first, then run this again.')
