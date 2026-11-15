@@ -4,9 +4,11 @@ import { Terminal, ShieldCheck } from 'lucide-react'
 const tools = [
   { href: '/', label: 'Bcrypt Generator' },
   { href: '/verify', label: 'Hash Verifier' },
+  { href: '/tools/hash-generator', label: 'Hash & Checksum' },
   { href: '/tools/md5', label: 'MD5 Generator' },
   { href: '/tools/sha256', label: 'SHA-256 Generator' },
   { href: '/tools/password-generator', label: 'Password Generator' },
+  { href: '/tools/pin-generator', label: 'PIN Generator' },
   { href: '/tools/password-strength', label: 'Password Strength' },
 ]
 

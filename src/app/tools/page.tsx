@@ -1,26 +1,26 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { BreadcrumbSchema } from '@/components/seo/JsonLd'
-import { ChevronRight, Hash, Shield, Lock, KeyRound } from 'lucide-react'
+import { ChevronRight, Hash, Shield, Lock, KeyRound, FileCheck2, Grid3x3 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Free Developer Security Tools — Hash Generators & Password Tools',
+  title: 'Free Security Tools: Hash, Password & PIN Generators',
   description:
-    'Free online security tools for developers: bcrypt generator, MD5 hash generator, SHA-256 generator, and password strength checker. All client-side — no data sent to servers.',
-  keywords: ['developer security tools', 'hash generator', 'bcrypt tool', 'online security tools', 'password tools'],
+    'Free online security tools: bcrypt generator, hash and file checksum calculator, password and PIN generators, and a password strength checker. Everything runs in your browser.',
+  keywords: ['security tools', 'hash generator', 'checksum calculator', 'pin generator', 'password generator', 'bcrypt tool', 'online security tools', 'password tools'],
   alternates: { canonical: 'https://bcryptgenerator.org/tools' },
   openGraph: {
     siteName: 'BcryptGenerator.org',
     locale: 'en_US',
-    title: 'Free Developer Security Tools — Hash Generators & Password Tools',
-    description: 'Free online security tools for developers: bcrypt generator, MD5, SHA-256, and password strength checker. All client-side — no data sent to servers.',
+    title: 'Free Security Tools: Hash, Password & PIN Generators',
+    description: 'Bcrypt, hash and file checksum, password and PIN tools. Everything runs in your browser; no data is sent to a server.',
     url: 'https://bcryptgenerator.org/tools',
     images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'Developer Security Tools' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Free Developer Security Tools',
-    description: 'Bcrypt generator, MD5, SHA-256, and password strength checker — all client-side, free.',
+    title: 'Free Security Tools',
+    description: 'Bcrypt, hash and checksum, password and PIN tools. All client-side and free.',
     images: ['/opengraph-image'],
   },
 }
@@ -43,6 +43,14 @@ const tools = [
     badgeColor: '',
   },
   {
+    href: '/tools/hash-generator',
+    icon: FileCheck2,
+    label: 'Hash Generator & Checksum',
+    desc: 'MD5, SHA-1, SHA-256 and SHA-512 of text or files, plus a checksum checker to verify downloads. Files are never uploaded.',
+    badge: 'New',
+    badgeColor: 'bg-emerald-900 text-emerald-300 border border-emerald-700',
+  },
+  {
     href: '/tools/md5',
     icon: Hash,
     label: 'MD5 Generator',
@@ -63,6 +71,14 @@ const tools = [
     icon: KeyRound,
     label: 'Password Generator',
     desc: 'Generate strong random passwords or memorable passphrases, then get a bcrypt hash of them in one click.',
+    badge: null,
+    badgeColor: '',
+  },
+  {
+    href: '/tools/pin-generator',
+    icon: Grid3x3,
+    label: 'PIN Generator',
+    desc: 'Random 4, 6 or 8-digit PINs for phones, SIM and bank cards, skipping patterns like 1234 and 0000.',
     badge: 'New',
     badgeColor: 'bg-emerald-900 text-emerald-300 border border-emerald-700',
   },
@@ -94,7 +110,7 @@ export default function ToolsPage() {
         </nav>
 
         <h1 className="text-3xl sm:text-4xl font-bold text-slate-50 tracking-tight mb-3">
-          Developer Security Tools
+          Free Security Tools
         </h1>
         <p className="text-slate-400 text-lg mb-10 leading-relaxed">
           Free, client-side security tools. All processing happens in your browser — no data is ever sent to our servers.
@@ -138,9 +154,11 @@ export default function ToolsPage() {
               <tbody>
                 <tr><td>Store a user&apos;s password safely</td><td><Link href="/">Bcrypt Generator</Link></td></tr>
                 <tr><td>Check a password against a stored bcrypt hash, or debug a failing login</td><td><Link href="/verify">Bcrypt Checker</Link></td></tr>
-                <tr><td>Fingerprint a file or message, or verify a download</td><td><Link href="/tools/sha256">SHA-256 Generator</Link></td></tr>
+                <tr><td>Verify a download, or get a file&apos;s MD5, SHA-1, SHA-256 or SHA-512 checksum</td><td><Link href="/tools/hash-generator">Hash Generator &amp; Checksum</Link></td></tr>
+                <tr><td>Fingerprint text with SHA-256, with code examples</td><td><Link href="/tools/sha256">SHA-256 Generator</Link></td></tr>
                 <tr><td>Match a value from an older system that uses MD5</td><td><Link href="/tools/md5">MD5 Generator</Link></td></tr>
                 <tr><td>Create a strong random password or passphrase</td><td><Link href="/tools/password-generator">Password Generator</Link></td></tr>
+                <tr><td>Pick a random PIN for a phone, SIM or bank card</td><td><Link href="/tools/pin-generator">PIN Generator</Link></td></tr>
                 <tr><td>See how guessable a password is</td><td><Link href="/tools/password-strength">Password Strength Checker</Link></td></tr>
               </tbody>
             </table>

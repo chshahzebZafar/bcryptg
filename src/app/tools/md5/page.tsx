@@ -187,7 +187,7 @@ hashlib.md5("abc".encode("utf-8")).hexdigest()`}</code></pre>
           <p><strong>PHP</strong></p>
           <pre><code>{`md5('abc');`}</code></pre>
           <p>
-            Need a secure hash instead? Try the <Link href="/tools/sha256">SHA-256 generator</Link>, or read{' '}
+            Need the MD5 of a file, or several algorithms at once? Use the <Link href="/tools/hash-generator">hash generator and checksum calculator</Link>. Need a secure hash instead? Try the <Link href="/tools/sha256">SHA-256 generator</Link>, or read{' '}
             <Link href="/blog/what-is-bcrypt">what bcrypt is</Link> if you are hashing passwords.
           </p>
         </article>

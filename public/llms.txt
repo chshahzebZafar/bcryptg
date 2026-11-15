@@ -14,6 +14,8 @@ Key facts:
 - [Bcrypt Checker](https://bcryptgenerator.org/verify): Check whether a password matches a bcrypt hash and see the hash's version, cost and salt
 - [Password Generator](https://bcryptgenerator.org/tools/password-generator): Random passwords and EFF word-list passphrases with entropy shown and an optional bcrypt hash
 - [Password Strength Checker](https://bcryptgenerator.org/tools/password-strength): Instant strength feedback and current NIST SP 800-63B guidance
+- [Hash Generator & Checksum Calculator](https://bcryptgenerator.org/tools/hash-generator): MD5, SHA-1, SHA-256, SHA-384 and SHA-512 of text or files (up to 2 GB, never uploaded), with a checksum checker that detects the algorithm
+- [Random PIN Generator](https://bcryptgenerator.org/tools/pin-generator): Secure random 4–12 digit PINs that skip patterns such as 0000, 1234 and 1212
 - [SHA-256 Hash Generator](https://bcryptgenerator.org/tools/sha256): SHA-256 of UTF-8 text via the Web Crypto API, with test vectors
 - [MD5 Hash Generator](https://bcryptgenerator.org/tools/md5): MD5 of UTF-8 text, with test vectors and reasons hashes don't match
 

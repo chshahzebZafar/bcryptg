@@ -169,6 +169,7 @@ export default function PasswordGeneratorPage() {
             <li>Store them in a password manager rather than a note or spreadsheet</li>
             <li>Turn on multi-factor authentication wherever it&apos;s offered</li>
             <li>Check an existing password with the <Link href="/tools/password-strength">password strength checker</Link></li>
+            <li>Need a numeric code for a phone, SIM or bank card? Use the <Link href="/tools/pin-generator">PIN generator</Link></li>
           </ul>
         </article>
 

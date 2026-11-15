@@ -168,6 +168,9 @@ export default function SHA256Page() {
             </table>
           </div>
           <p>
+            To hash a file or verify a download&apos;s checksum, or to get SHA-1 and SHA-512 too, use the <Link href="/tools/hash-generator">hash generator and checksum calculator</Link>.
+          </p>
+          <p>
             In short: use SHA-256 to fingerprint data, and <Link href="/">bcrypt</Link> (or Argon2id) to store passwords. Our{' '}
             <Link href="/blog/bcrypt-vs-argon2">bcrypt vs Argon2 guide</Link> covers the password side in depth.
           </p>
