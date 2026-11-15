@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm'
 import { getPostBySlug, getAllSlugs, getAllPosts } from '@/lib/mdx'
 import { ArticleSchema, BreadcrumbSchema } from '@/components/seo/JsonLd'
 import { AuthorBox } from '@/components/layout/AuthorBox'
+import { TryTool } from '@/components/blog/TryTool'
 import { author } from '@/lib/author'
 import { ChevronRight } from 'lucide-react'
 import type { BlogPost } from '@/types'
@@ -127,7 +128,11 @@ export default async function BlogPostPage({ params }: Props) {
         </header>
 
         <div className="prose max-w-none">
-          <MDXRemote source={post.content ?? ''} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
+          <MDXRemote
+            source={post.content ?? ''}
+            options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }}
+            components={{ TryTool }}
+          />
         </div>
 
         <div className="mt-10">

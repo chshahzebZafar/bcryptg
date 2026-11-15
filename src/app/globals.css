@@ -115,13 +115,13 @@ html {
   font-size: 0.875rem;
 }
 
-.prose a {
+.prose a:not(.not-prose *) {
   color: var(--color-blue-400);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-.prose a:hover {
+.prose a:not(.not-prose *):hover {
   color: var(--color-blue-300);
 }
 

@@ -12,6 +12,8 @@ readingTime: '10 min read'
 
 This guide explains where the limit comes from, why it's measured in bytes rather than characters, exactly what each popular library does (we tested them), and how to handle it safely.
 
+<TryTool href="/" icon="generator" title="See the 72-byte limit live" cta="Open the bcrypt generator">Type a long password, or one with a few emoji, into the generator. It warns you the moment it passes 72 bytes.</TryTool>
+
 ## Why 72 bytes?
 
 Bcrypt is built on the Blowfish cipher, and it feeds the password into Blowfish's key setup. That key setup has room for 18 subkeys of 32 bits each: 576 bits, or 72 bytes. The [original bcrypt paper](https://www.usenix.org/legacy/events/usenix99/provos/provos.pdf) by Provos and Mazières uses the password as that key, so the limit comes with the design.

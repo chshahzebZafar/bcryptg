@@ -41,6 +41,8 @@ In `bcrypt` 5.0 the signature is `gensalt(rounds=12, prefix=b"2b")`, so calling 
 
 Hashing the same password twice gives two different results because of the random salt, and that's expected. Never check a password by hashing it again and comparing the strings; always use `checkpw()`.
 
+<TryTool href="/" icon="generator" title="Need a hash to test your code?" cta="Generate a test hash">Create a bcrypt hash in your browser and check that checkpw() accepts it.</TryTool>
+
 ## Checking a password with checkpw()
 
 ```python
@@ -65,6 +67,8 @@ def check_password(password: str, stored_hash: str) -> bool:
 ```
 
 The stored string is always 60 characters: `$2b$12$` followed by 53 more. Give the column room to grow, such as `VARCHAR(255)` or `TEXT`, in case you switch algorithms later. See [how to store bcrypt hashes in MySQL and PostgreSQL](/blog/bcrypt-hash-length-database).
+
+<TryTool href="/verify" icon="checker" title="checkpw() returning False?" cta="Check the hash">Paste the stored hash and the password into the bcrypt checker to see whether the problem is the hash or your code.</TryTool>
 
 ## Fixing common Python bcrypt errors
 

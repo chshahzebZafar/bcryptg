@@ -12,6 +12,8 @@ readingTime: '7 min read'
 
 That's usually not what you actually need, though. Below are the things people searching "bcrypt decrypt" are usually trying to do, and how to do each one.
 
+<TryTool href="/verify" icon="checker" title="Have the password and the hash?" cta="Open the bcrypt checker">You don't need to decrypt anything. Paste both into the checker to see if they match, right in your browser.</TryTool>
+
 ## Is bcrypt encryption or hashing?
 
 **Hashing.** The difference matters:
@@ -92,6 +94,8 @@ UPDATE users SET password_hash = '$2b$12$...your new hash...' WHERE email = 'adm
 Use a real new password rather than the example, and clear it from your shell history afterwards. For other people's accounts, use your app's normal password-reset email flow instead of editing the database.
 
 **Laravel:** Laravel rejects hashes that start with `$2b$` (the Node and Python output) unless you change the first four characters to `$2y$`. The PHP one-liner already produces `$2y$`. Our [PHP and Laravel guide](/blog/bcrypt-php-tutorial) explains why.
+
+<TryTool href="/" icon="generator" title="Need a new hash to reset a password?" cta="Generate a bcrypt hash">Create a cost-12 bcrypt hash in your browser, then paste it into your database.</TryTool>
 
 ### Move users to a new system
 

@@ -101,6 +101,8 @@ const hash = await bcrypt.hash(password, 12);
 const valid = await bcrypt.compare(password, hash);
 ```
 
+<TryTool href="/" icon="generator" title="Going with bcrypt?" cta="Open the bcrypt generator">Hash a password at different cost factors and see the recommended setting, all in your browser.</TryTool>
+
 ## The Bottom Line
 
 Both are secure when used correctly. For new projects, **Argon2id** is the forward-looking choice. For existing bcrypt systems, **staying on bcrypt with 12+ rounds is completely fine** — there's no urgent need to migrate.

@@ -62,6 +62,8 @@ A bcrypt hash is always 60 characters, but don't size the column for exactly tha
 password_hash VARCHAR(255) NOT NULL
 ```
 
+<TryTool href="/verify" icon="checker" title="Got a $2y$ hash from PHP or Laravel?" cta="Open the bcrypt checker">Check it against a password and see its version, cost and salt, without running any PHP.</TryTool>
+
 ## Checking a password with password_verify()
 
 ```php
