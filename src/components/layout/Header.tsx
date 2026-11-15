@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { Menu, X, Terminal } from 'lucide-react'
+import { ThemeToggle } from './ThemeToggle'
 
 const navLinks = [
   { href: '/', label: 'Generator' },
@@ -42,16 +43,20 @@ export function Header() {
                 {label}
               </Link>
             ))}
-            </nav>
+            <ThemeToggle className="ml-1" />
+          </nav>
 
-          <button
-            className="md:hidden p-2 text-slate-400 hover:text-slate-100 cursor-pointer"
-            onClick={() => setOpen(!open)}
-            aria-label={open ? 'Close menu' : 'Open menu'}
-            aria-expanded={open}
-          >
-            {open ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          <div className="flex items-center gap-1 md:hidden">
+            <ThemeToggle />
+            <button
+              className="p-2 text-slate-400 hover:text-slate-100 cursor-pointer"
+              onClick={() => setOpen(!open)}
+              aria-label={open ? 'Close menu' : 'Open menu'}
+              aria-expanded={open}
+            >
+              {open ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
         </div>
 
         {open && (

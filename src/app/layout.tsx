@@ -4,6 +4,7 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { WebSiteSchema, OrganizationSchema } from '@/components/seo/JsonLd'
 import { Analytics } from '@vercel/analytics/next'
+import { themeInitScript } from '@/lib/theme'
 import './globals.css'
 
 const inter = Inter({
@@ -76,8 +77,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrains.variable}`}>
+    // suppressHydrationWarning: the theme script sets data-theme on <html> before React loads
+    <html lang="en" className={`${inter.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <WebSiteSchema />
         <OrganizationSchema />
         {/* /favicon.ico comes from src/app/favicon.ico (Next.js adds that link automatically) */}

@@ -202,7 +202,7 @@ export function HashGenerator() {
                 </span>
                 {h && <CopyButton text={show(h)} />}
               </div>
-              <p className={`font-mono text-sm break-all ${h ? 'text-emerald-400 select-all' : 'text-slate-600'}`}>
+              <p className={`font-mono text-sm break-all ${h ? 'text-emerald-400 select-all' : 'text-slate-500'}`}>
                 {h ? show(h) : mode === 'file' ? 'Choose a file to see its hash' : 'Type something to see its hash'}
               </p>
             </div>

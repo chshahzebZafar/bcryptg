@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "./theme.css";
+
+/* `light:` utilities apply only in light mode, e.g. `hidden light:block` */
+@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
 
 @theme {
   --font-sans: var(--font-inter);
@@ -17,14 +21,14 @@ html {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: var(--color-slate-900);
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--color-slate-700);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--color-slate-600);
 }
 
 .hash-output {
@@ -35,23 +39,23 @@ html {
 .prose h2 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #f1f5f9;
+  color: var(--color-slate-100);
   margin-top: 2rem;
   margin-bottom: 1rem;
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid var(--color-slate-800);
   padding-bottom: 0.5rem;
 }
 
 .prose h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #e2e8f0;
+  color: var(--color-slate-200);
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
 }
 
 .prose p {
-  color: #cbd5e1;
+  color: var(--color-slate-300);
   line-height: 1.75;
   margin-bottom: 1rem;
 }
@@ -59,7 +63,7 @@ html {
 .prose ul {
   list-style-type: disc;
   padding-left: 1.5rem;
-  color: #cbd5e1;
+  color: var(--color-slate-300);
   margin-bottom: 1rem;
 }
 
@@ -83,21 +87,21 @@ html {
 
 .prose li.task-list-item input {
   margin-right: 0.5rem;
-  accent-color: #2563eb;
+  accent-color: var(--color-blue-600);
 }
 
 .prose code {
   font-family: var(--font-mono);
-  background: #1e293b;
-  color: #34d399;
+  background: var(--color-slate-800);
+  color: var(--color-emerald-400);
   padding: 0.125rem 0.375rem;
   border-radius: 4px;
   font-size: 0.875em;
 }
 
 .prose pre {
-  background: #0f172a;
-  border: 1px solid #1e293b;
+  background: var(--color-slate-900);
+  border: 1px solid var(--color-slate-800);
   border-radius: 8px;
   padding: 1rem 1.25rem;
   overflow-x: auto;
@@ -107,22 +111,22 @@ html {
 .prose pre code {
   background: transparent;
   padding: 0;
-  color: #e2e8f0;
+  color: var(--color-slate-200);
   font-size: 0.875rem;
 }
 
 .prose a {
-  color: #60a5fa;
+  color: var(--color-blue-400);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .prose a:hover {
-  color: #93c5fd;
+  color: var(--color-blue-300);
 }
 
 .prose strong {
-  color: #f1f5f9;
+  color: var(--color-slate-100);
   font-weight: 600;
 }
 
@@ -133,22 +137,22 @@ html {
 }
 
 .prose th {
-  background: #1e293b;
-  color: #f1f5f9;
+  background: var(--color-slate-800);
+  color: var(--color-slate-100);
   padding: 0.75rem 1rem;
   text-align: left;
   font-weight: 600;
-  border: 1px solid #334155;
+  border: 1px solid var(--color-slate-700);
 }
 
 .prose td {
   padding: 0.75rem 1rem;
-  border: 1px solid #1e293b;
-  color: #cbd5e1;
+  border: 1px solid var(--color-slate-800);
+  color: var(--color-slate-300);
 }
 
 .prose tr:nth-child(even) td {
-  background: #0f172a;
+  background: var(--color-slate-900);
 }
 
 /* Wi-Fi QR generator: print only the card, on a white page. Scoped with :has()

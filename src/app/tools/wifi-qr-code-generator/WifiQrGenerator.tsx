@@ -131,7 +131,7 @@ export function WifiQrGenerator() {
 
       <div className="flex flex-col items-center gap-3 md:w-64">
         {/* Printable card: the print stylesheet shows only this element */}
-        <div id="wifi-card" className="bg-white rounded-xl p-4 w-full max-w-64 text-center text-slate-900">
+        <div id="wifi-card" className="bg-white border border-neutral-200 rounded-xl p-4 w-full max-w-64 text-center text-neutral-900">
           <div className="flex items-center justify-center gap-1.5 text-sm font-semibold mb-2">
             <Wifi size={16} aria-hidden="true" /> Wi-Fi
           </div>
@@ -143,17 +143,17 @@ export function WifiQrGenerator() {
               dangerouslySetInnerHTML={{ __html: svg }}
             />
           ) : (
-            <div className="mx-auto w-full max-w-56 aspect-square border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center text-xs text-slate-500 px-4">
+            <div className="mx-auto w-full max-w-56 aspect-square border-2 border-dashed border-neutral-300 rounded-lg flex items-center justify-center text-xs text-neutral-500 px-4">
               Enter your network name{security !== 'nopass' ? ' and password' : ''} to create the QR code
             </div>
           )}
           {qr && (
             <div className="mt-2 text-xs leading-relaxed">
-              <p className="break-all"><span className="text-slate-500">Network:</span> <strong>{ssid}</strong></p>
+              <p className="break-all"><span className="text-neutral-500">Network:</span> <strong>{ssid}</strong></p>
               {security !== 'nopass' && printPassword && (
-                <p className="break-all"><span className="text-slate-500">Password:</span> <span className="font-mono">{password}</span></p>
+                <p className="break-all"><span className="text-neutral-500">Password:</span> <span className="font-mono">{password}</span></p>
               )}
-              <p className="text-slate-500 mt-1">Scan with your phone camera to connect</p>
+              <p className="text-neutral-500 mt-1">Scan with your phone camera to connect</p>
             </div>
           )}
         </div>

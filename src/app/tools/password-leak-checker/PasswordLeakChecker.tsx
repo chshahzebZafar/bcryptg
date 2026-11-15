@@ -75,7 +75,7 @@ export function PasswordLeakChecker() {
             <p className="text-sm text-red-200/90 leading-relaxed">
               Attackers try known leaked passwords first, so don&apos;t use this one anywhere. If you do, change it on every site
               where you used it, starting with email and banking. Create a new one with the{' '}
-              <Link href="/tools/password-generator" className="underline hover:text-white">password generator</Link>.
+              <Link href="/tools/password-generator" className="underline hover:opacity-80">password generator</Link>.
             </p>
           </div>
         )}
@@ -88,7 +88,7 @@ export function PasswordLeakChecker() {
             </p>
             <p className="text-sm text-emerald-100/80 leading-relaxed">
               Good news, but not a guarantee it&apos;s strong: a short or predictable password can still be guessed. Check it with the{' '}
-              <Link href="/tools/password-strength" className="underline hover:text-white">password strength checker</Link>, and
+              <Link href="/tools/password-strength" className="underline hover:opacity-80">password strength checker</Link>, and
               use it on one site only.
             </p>
           </div>
@@ -99,7 +99,7 @@ export function PasswordLeakChecker() {
             <summary className="px-4 py-2.5 cursor-pointer text-slate-300 select-none">What was sent to check this?</summary>
             <div className="px-4 pb-4 text-slate-400 space-y-1.5 leading-relaxed">
               <p>Your browser hashed the password with SHA-1 and sent only the first 5 of its 40 characters:</p>
-              <p className="font-mono text-base"><span className="text-amber-300">{result.prefix}</span><span className="text-slate-600">{result.hash.slice(5)}</span></p>
+              <p className="font-mono text-base"><span className="text-amber-300">{result.prefix}</span><span className="text-slate-500">{result.hash.slice(5)}</span></p>
               <p>
                 The breach database replied with {result.candidates.toLocaleString('en-US')} hashes that start with{' '}
                 <code>{result.prefix}</code> (some of them random padding), and your browser compared them locally. Neither the
