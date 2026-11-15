@@ -2,7 +2,7 @@
 title: 'Bcrypt in Node.js — Complete Tutorial with Code Examples'
 description: 'Learn how to hash and verify passwords with bcrypt in Node.js. Covers bcryptjs installation, async usage, Express integration, and common mistakes to avoid.'
 date: '2026-01-20'
-lastModified: '2026-05-01'
+lastModified: '2026-11-15'
 tags: ['bcrypt', 'nodejs', 'javascript', 'tutorial']
 readingTime: '9 min read'
 ---
@@ -11,20 +11,16 @@ readingTime: '9 min read'
 
 There are two bcrypt packages for Node.js:
 
-- **bcrypt** — native C++ bindings, faster but requires compilation
-- **bcryptjs** — pure JavaScript, works everywhere including serverless
+- **bcrypt** — native C++ addon. Version 6 ships prebuilt binaries, so it usually installs without compiling, and it hashes on background threads
+- **bcryptjs** — pure JavaScript with no dependencies; runs anywhere, including the browser and edge runtimes
 
-For most projects, `bcryptjs` is the better choice:
+They produce compatible hashes and share the same API, so this tutorial uses `bcryptjs` and every example also works with `bcrypt` by changing the import. For a busy server, the native package handles many simultaneous logins much better: see [bcrypt vs bcryptjs](/blog/bcrypt-vs-bcryptjs) for our benchmarks.
 
 ```bash
 npm install bcryptjs
 ```
 
-If you need TypeScript types:
-
-```bash
-npm install @types/bcryptjs
-```
+`bcryptjs` 3 includes its own TypeScript types, so you don't need `@types/bcryptjs`, which is now an empty stub. (If you use `bcrypt` instead, install `@types/bcrypt`.)
 
 ## Basic Usage
 
@@ -224,7 +220,7 @@ jest.mock('bcryptjs', () => ({
 
 ## Summary
 
-- Use `bcryptjs` for universal compatibility
+- Use `bcryptjs` for portability, or `bcrypt` for a server under real login load ([compare them](/blog/bcrypt-vs-bcryptjs))
 - Always use async methods (`hash`, `compare`)
 - Set `BCRYPT_ROUNDS` via environment variable (default 12)
 - Return consistent errors to prevent user enumeration

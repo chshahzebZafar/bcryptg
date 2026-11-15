@@ -1,0 +1,179 @@
+---
+title: 'bcrypt vs bcryptjs: Which Should You Use in Node.js?'
+seoTitle: 'bcrypt vs bcryptjs: Which to Use in Node.js (2026 Tests)'
+description: 'We benchmarked bcrypt 6 and bcryptjs 3 on Node 24: one login takes about the same time, eight at once differ 4x. Results, install facts and which to use.'
+date: '2026-11-15'
+lastModified: '2026-11-15'
+tags: ['bcrypt', 'nodejs', 'javascript', 'performance']
+readingTime: '9 min read'
+---
+
+**Use `bcrypt` on a Node.js server that handles real login traffic, and `bcryptjs` everywhere else.** Both produce the same hashes and can check each other's, so you can switch at any time. In our tests a single hash took about the same time with either, but when eight logins arrived at once the native `bcrypt` package finished about four times sooner, because it hashes on background threads while `bcryptjs` runs everything on Node's main thread.
+
+The old reason to avoid `bcrypt` (it needs Python and a C++ compiler to install) mostly went away in 2025: version 6 ships prebuilt binaries inside the package.
+
+## At a glance
+
+| | `bcrypt` | `bcryptjs` |
+|---|---|---|
+| What it is | Native C++ addon | Pure JavaScript |
+| Latest version | 6.0.0 (published May 2025) | 3.0.3 (published November 2025) |
+| npm downloads, week of Nov 8–14, 2026 | 8.6 million | 19.9 million |
+| Runtime dependencies | 2 (`node-addon-api`, `node-gyp-build`) | None |
+| Package size (unpacked) | 1.1 MB, binaries for 7 platforms included | 112 KB |
+| Where hashing runs (async API) | libuv thread pool | Main thread, in 100 ms slices |
+| TypeScript types | Separate: `@types/bcrypt` | Built in |
+| Runs in the browser, Cloudflare Workers, edge functions | No | Yes |
+| Accepts PHP's `$2y$` hashes | No, `compare()` returns `false` | Yes |
+| Tells you a password is over 72 bytes | No | Yes, `bcrypt.truncates()` |
+
+Download counts come from the npm downloads API; all other details from the published packages.
+
+## Speed: one login vs many logins
+
+We ran both packages on the same laptop (Intel Core i7-1165G7, 8 threads, Windows, Node.js 24.15) using their async APIs, which is what a server should use. Each figure is the median of 7 runs, and the ranges cover two separate test sessions, because a laptop's speed varies with temperature and power state.
+
+**A single operation:**
+
+| | `bcrypt` | `bcryptjs` |
+|---|---|---|
+| Hash, cost 10 | 76–83 ms | 86–103 ms |
+| Compare, cost 10 | 77–81 ms | 89–90 ms |
+| Hash, cost 12 | 309–316 ms | 357–501 ms |
+| Compare, cost 12 | 305–363 ms | 420–426 ms |
+
+For one user logging in, the difference is small: `bcryptjs` is roughly 10–40% slower, and nobody notices a few extra milliseconds on a login.
+
+**Eight logins at the same moment** (eight `compare()` calls at cost 12, started together):
+
+| | Total time |
+|---|---|
+| `bcrypt` (default 4 background threads) | 790–807 ms |
+| `bcrypt` with `UV_THREADPOOL_SIZE=8` | 523 ms |
+| `bcryptjs` | 3.4–4.3 s |
+
+This is where they really differ. `bcrypt` spreads the work across Node's libuv thread pool, so four hashes run at once by default. `bcryptjs` has only the main thread, so eight logins queue up one behind the other and the last user waits about four seconds. Raising `UV_THREADPOOL_SIZE` helps `bcrypt` further, but that pool is shared with file system and DNS work, so test before changing it in production.
+
+## The event loop: why your other requests slow down
+
+Hashing is deliberately slow, so the important question is whether it stops your server from doing anything else. We measured the longest delay a 5 ms timer suffered while one cost-12 hash was running:
+
+| | Async API | Sync API |
+|---|---|---|
+| `bcrypt` | 11–12 ms | 341–511 ms |
+| `bcryptjs` | 96–97 ms | 372–621 ms |
+
+- **`bcrypt`'s async API** barely touches the event loop; the work happens on another thread.
+- **`bcryptjs`'s async API** works on the main thread and hands control back about every 100 ms. You can see this in its source: `MAX_EXECUTION_TIME = 100`. So every other request on that server can stall for up to a tenth of a second while someone logs in.
+- **The sync APIs** (`hashSync`, `compareSync`) block everything for the whole hash, with either package. Don't use them in a web server; they're fine in scripts and CLIs.
+
+## "bcrypt needs Python and node-gyp": mostly not any more
+
+Many of the most-viewed bcrypt questions on Stack Overflow are install failures: `node-gyp` errors, "Could not find any Python installation" on Docker Alpine images, and `invalid ELF header`. They come from older versions. Up to version 5, `bcrypt` downloaded a prebuilt binary during install and fell back to compiling from source, which needs Python and a C++ toolchain, whenever the download failed or didn't match your platform.
+
+Version 6.0.0 changed that: according to its changelog it switched to `prebuildify`, and **the binaries now ship inside the npm package**. The package we installed contains prebuilt binaries for:
+
+- Windows x64 and ARM64
+- macOS x64 and Apple Silicon (ARM64)
+- Linux x64, ARM64 and 32-bit ARM, each built for both glibc (Debian, Ubuntu) and **musl (Alpine)**
+
+So on those platforms, `npm install bcrypt` shouldn't need to compile anything, including on Alpine. We checked the package contents on Windows; we didn't run the install inside Docker or Linux ourselves.
+
+Two things still bite:
+
+- **`invalid ELF header`** means Node loaded a binary built for a different operating system, usually because `node_modules` was copied from a Mac or Windows machine into a Linux container. Don't copy `node_modules` into images: add it to `.dockerignore` and run `npm ci` inside the image.
+- **An unusual platform or a pre-release Node version** still falls back to compiling, and then you need Python and a C++ compiler again. If you can't install build tools, use `bcryptjs`.
+
+## Hashes are interchangeable, with one exception
+
+Both packages create `$2b$` hashes, and in our tests each one verified the other's hashes, so you can switch packages without resetting anyone's password:
+
+```js
+import bcrypt from 'bcrypt'
+import bcryptjs from 'bcryptjs'
+
+const fromNative = await bcrypt.hash('correct horse battery staple', 10)
+await bcryptjs.compare('correct horse battery staple', fromNative) // true
+
+const fromJs = await bcryptjs.hash('correct horse battery staple', 10)
+await bcrypt.compare('correct horse battery staple', fromJs) // true
+```
+
+The exception is hashes created by PHP or Laravel, which start with `$2y$`. `bcryptjs` accepts them. Native `bcrypt` doesn't: in our test `compare()` simply returned `false`, with no error, which looks exactly like a wrong password. The algorithm is the same, so changing the prefix fixes it:
+
+```js
+const fixed = storedHash.replace(/^\$2y\$/, '$2b$')
+const ok = await bcrypt.compare(password, fixed)
+```
+
+This is one of the causes in [why bcrypt.compare() returns false](/blog/bcrypt-compare-returns-false).
+
+## Passwords over 72 bytes
+
+Both packages hash only the first 72 bytes of a password and silently ignore the rest: in our test, a password with five extra characters after 72 bytes still matched its first 72 bytes. `bcryptjs` at least lets you detect it:
+
+```js
+import bcrypt from 'bcryptjs'
+
+bcrypt.truncates(password) // true if anything past byte 72 would be ignored
+```
+
+Native `bcrypt` has no equivalent, so measure the length yourself with `Buffer.byteLength(password, 'utf8')`. Our [72-byte limit guide](/blog/bcrypt-72-byte-limit) covers why this matters and how to handle it.
+
+## TypeScript and ES modules
+
+- **`bcryptjs` 3 includes its own types** and supports both `import bcrypt from 'bcryptjs'` and `require('bcryptjs')`. The `@types/bcryptjs` package is now an empty stub whose npm page says you don't need it, yet it still had about 8.6 million downloads in the same week, mostly from older tutorials and templates. If you're on `bcryptjs` 3, you can uninstall it.
+- **`bcrypt` has no built-in types.** Install `@types/bcrypt` (currently 6.0.0) alongside it.
+
+## When bcryptjs is the only option
+
+A native addon can only run where Node can load compiled code. That rules out:
+
+- the browser
+- Cloudflare Workers and other edge runtimes
+- environments where you can't add binaries, or the platform isn't in the prebuilt list above
+
+`bcryptjs` runs in all of them because it's plain JavaScript. It's what powers the [bcrypt generator](/) and [bcrypt checker](/verify) on this site: the hashing happens in your browser, so your password never reaches a server.
+
+## A third option: @node-rs/bcrypt
+
+`@node-rs/bcrypt` is a Rust implementation with prebuilt binaries, downloaded about half a million times a week. In our test a single cost-12 hash took 277 ms, in line with native `bcrypt`, but eight concurrent checks took 1.6 s: slower than native `bcrypt`, much faster than `bcryptjs`. Its hashes were compatible with both other packages, and it accepted `$2y$`.
+
+One warning if you try it: **version 2.0.0, released on October 6, 2026, changed the API.** Code from older tutorials, `hash(password, 10)`, now throws `TypeError: options must be an object`. Pass the cost in an object instead:
+
+```js
+import { hash, verify } from '@node-rs/bcrypt'
+
+const stored = await hash(password, { cost: 12 })
+const ok = await verify(password, stored)
+```
+
+## Which one should you use?
+
+- **A Node.js API or web app with real login traffic:** `bcrypt`. It keeps the event loop free and handles bursts of logins far better.
+- **Serverless functions that handle one request at a time:** either works. `bcryptjs` avoids a native binary in your bundle.
+- **Browser, edge runtime, or no way to install binaries:** `bcryptjs`.
+- **Scripts, seeders, tests:** either; even the sync APIs are fine here.
+- **Starting a new project and free to choose an algorithm:** consider Argon2id. See [bcrypt vs Argon2](/blog/bcrypt-vs-argon2).
+
+Whichever you pick, use the async API on a server, use a cost of at least 10 (we recommend 12; see [how many rounds to use](/blog/how-many-bcrypt-rounds)), and store the hash in a column of at least 60 characters. For a full walkthrough, see our [Node.js bcrypt tutorial](/blog/bcrypt-nodejs-tutorial).
+
+## How we tested
+
+- `bcrypt` 6.0.0, `bcryptjs` 3.0.3 and `@node-rs/bcrypt` 2.0.0, installed from npm on November 15, 2026
+- Node.js 24.15.0 on Windows 11, Intel Core i7-1165G7 (4 cores, 8 threads), plugged in
+- Async APIs, one warm-up run, then the median of 7 runs (single operations) or 3 runs (concurrent checks)
+- Event-loop delay measured as the worst lateness of a 5 ms `setInterval` while one hash ran
+
+Your numbers will differ on other hardware, but the pattern shouldn't: similar speed for one hash, a large gap under concurrent load. You can check with this snippet:
+
+```js
+import bcrypt from 'bcrypt' // or 'bcryptjs'
+
+const hash = await bcrypt.hash('test', 12)
+const start = performance.now()
+await Promise.all(Array.from({ length: 8 }, () => bcrypt.compare('test', hash)))
+console.log(`8 concurrent compares: ${Math.round(performance.now() - start)} ms`)
+```
+
+*Drafted with AI assistance; reviewed and tested by Shahzeb Zafar.*
