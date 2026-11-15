@@ -35,7 +35,8 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https:",
-      `connect-src 'self' ${GOOGLE_ADS}`,
+      // api.pwnedpasswords.com: the password leak checker sends only a 5-character SHA-1 prefix
+      `connect-src 'self' https://api.pwnedpasswords.com ${GOOGLE_ADS}`,
       `frame-src ${GOOGLE_ADS}`,
       "frame-ancestors 'none'",
       "base-uri 'self'",

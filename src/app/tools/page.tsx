@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { BreadcrumbSchema } from '@/components/seo/JsonLd'
-import { ChevronRight, Hash, Shield, Lock, KeyRound, FileCheck2, Grid3x3 } from 'lucide-react'
+import { ChevronRight, Hash, Shield, Lock, KeyRound, FileCheck2, Grid3x3, ShieldAlert, Wifi } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Free Security Tools: Hash, Password & PIN Generators',
   description:
-    'Free online security tools: bcrypt generator, hash and file checksum calculator, password and PIN generators, and a password strength checker. Everything runs in your browser.',
+    'Free online security tools: bcrypt generator, hash and checksum calculator, password, PIN and Wi-Fi QR generators, a password leak checker and strength checker. All in your browser.',
   keywords: ['security tools', 'hash generator', 'checksum calculator', 'pin generator', 'password generator', 'bcrypt tool', 'online security tools', 'password tools'],
   alternates: { canonical: 'https://bcryptgenerator.org/tools' },
   openGraph: {
@@ -79,6 +79,22 @@ const tools = [
     icon: Grid3x3,
     label: 'PIN Generator',
     desc: 'Random 4, 6 or 8-digit PINs for phones, SIM and bank cards, skipping patterns like 1234 and 0000.',
+    badge: 'New',
+    badgeColor: 'bg-emerald-900 text-emerald-300 border border-emerald-700',
+  },
+  {
+    href: '/tools/password-leak-checker',
+    icon: ShieldAlert,
+    label: 'Password Leak Checker',
+    desc: 'Check if a password has appeared in a data breach. Only 5 characters of its hash leave your browser.',
+    badge: 'New',
+    badgeColor: 'bg-emerald-900 text-emerald-300 border border-emerald-700',
+  },
+  {
+    href: '/tools/wifi-qr-code-generator',
+    icon: Wifi,
+    label: 'Wi-Fi QR Code Generator',
+    desc: 'A QR code that connects phones to your Wi-Fi in one scan. Download as PNG or SVG, or print a card.',
     badge: 'New',
     badgeColor: 'bg-emerald-900 text-emerald-300 border border-emerald-700',
   },
@@ -159,6 +175,8 @@ export default function ToolsPage() {
                 <tr><td>Match a value from an older system that uses MD5</td><td><Link href="/tools/md5">MD5 Generator</Link></td></tr>
                 <tr><td>Create a strong random password or passphrase</td><td><Link href="/tools/password-generator">Password Generator</Link></td></tr>
                 <tr><td>Pick a random PIN for a phone, SIM or bank card</td><td><Link href="/tools/pin-generator">PIN Generator</Link></td></tr>
+                <tr><td>Find out if a password has been leaked in a data breach</td><td><Link href="/tools/password-leak-checker">Password Leak Checker</Link></td></tr>
+                <tr><td>Let guests join your Wi-Fi by scanning a code</td><td><Link href="/tools/wifi-qr-code-generator">Wi-Fi QR Code Generator</Link></td></tr>
                 <tr><td>See how guessable a password is</td><td><Link href="/tools/password-strength">Password Strength Checker</Link></td></tr>
               </tbody>
             </table>

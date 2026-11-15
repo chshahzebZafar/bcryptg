@@ -150,3 +150,26 @@ html {
 .prose tr:nth-child(even) td {
   background: #0f172a;
 }
+
+/* Wi-Fi QR generator: print only the card, on a white page. Scoped with :has()
+   so printing every other page is unaffected. */
+@media print {
+  body:has(#wifi-card) {
+    background: #fff !important;
+  }
+  body:has(#wifi-card) * {
+    visibility: hidden;
+  }
+  body:has(#wifi-card) #wifi-card,
+  body:has(#wifi-card) #wifi-card * {
+    visibility: visible;
+  }
+  body:has(#wifi-card) #wifi-card {
+    position: absolute;
+    left: 50%;
+    top: 2cm;
+    transform: translateX(-50%) scale(1.4);
+    transform-origin: top center;
+    border: 1px solid #cbd5e1;
+  }
+}

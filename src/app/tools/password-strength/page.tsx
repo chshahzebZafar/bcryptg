@@ -115,7 +115,7 @@ export default function PasswordStrengthPage() {
             A strong password is one an attacker is unlikely to guess, even with fast hardware and huge lists of leaked passwords. In practice that comes down to three things: <strong>length</strong>, <strong>unpredictability</strong> and <strong>uniqueness</strong> (never reusing it on another site). Length matters most: every extra character multiplies the number of possible passwords.
           </p>
           <p>
-            This checker awards points for length (8, 12 and 16+ characters) and for mixing character types, and subtracts points for well-known patterns such as <code>password</code> or <code>123456</code>. Treat the score as a guide: no checker can tell whether a password has already appeared in a data breach or is easy to guess from your personal details.
+            This checker awards points for length (8, 12 and 16+ characters) and for mixing character types, and subtracts points for well-known patterns such as <code>password</code> or <code>123456</code>. Treat the score as a guide: a score can&apos;t tell whether a password is easy to guess from your personal details, or whether it has already appeared in a data breach. For that, run it through the <Link href="/tools/password-leak-checker">password leak checker</Link>, which checks it against known breaches without sending the password.
           </p>
 
           <h2>What NIST recommends</h2>

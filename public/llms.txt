@@ -16,6 +16,8 @@ Key facts:
 - [Password Strength Checker](https://bcryptgenerator.org/tools/password-strength): Instant strength feedback and current NIST SP 800-63B guidance
 - [Hash Generator & Checksum Calculator](https://bcryptgenerator.org/tools/hash-generator): MD5, SHA-1, SHA-256, SHA-384 and SHA-512 of text or files (up to 2 GB, never uploaded), with a checksum checker that detects the algorithm
 - [Random PIN Generator](https://bcryptgenerator.org/tools/pin-generator): Secure random 4–12 digit PINs that skip patterns such as 0000, 1234 and 1212
+- [Password Leak Checker](https://bcryptgenerator.org/tools/password-leak-checker): Checks whether a password appears in known data breaches via the Pwned Passwords k-anonymity API; only a 5-character SHA-1 prefix leaves the browser
+- [Wi-Fi QR Code Generator](https://bcryptgenerator.org/tools/wifi-qr-code-generator): QR codes in the WIFI: format that join a network in one scan; PNG, SVG or printable card, generated in the browser
 - [SHA-256 Hash Generator](https://bcryptgenerator.org/tools/sha256): SHA-256 of UTF-8 text via the Web Crypto API, with test vectors
 - [MD5 Hash Generator](https://bcryptgenerator.org/tools/md5): MD5 of UTF-8 text, with test vectors and reasons hashes don't match
 

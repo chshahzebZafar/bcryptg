@@ -14,9 +14,11 @@ const staticPages: { path: string; updated: string; changeFrequency: 'weekly' | 
   { path: '/tools/password-generator', updated: '2026-11-15', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/tools/md5',                updated: '2026-11-15', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/tools/sha256',             updated: '2026-11-15', changeFrequency: 'monthly', priority: 0.7 },
-  { path: '/tools/password-strength',  updated: '2026-11-04', changeFrequency: 'monthly', priority: 0.7 },
+  { path: '/tools/password-strength',  updated: '2026-11-15', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/tools/hash-generator',     updated: '2026-11-15', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/tools/pin-generator',      updated: '2026-11-15', changeFrequency: 'monthly', priority: 0.7 },
+  { path: '/tools/password-leak-checker', updated: '2026-11-15', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/tools/wifi-qr-code-generator', updated: '2026-11-15', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/about',                    updated: '2026-10-24', changeFrequency: 'yearly',  priority: 0.4 },
   // /api-docs intentionally excluded — marked noindex (coming soon)
 ]

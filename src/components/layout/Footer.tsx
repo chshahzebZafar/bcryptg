@@ -10,6 +10,8 @@ const tools = [
   { href: '/tools/password-generator', label: 'Password Generator' },
   { href: '/tools/pin-generator', label: 'PIN Generator' },
   { href: '/tools/password-strength', label: 'Password Strength' },
+  { href: '/tools/password-leak-checker', label: 'Password Leak Checker' },
+  { href: '/tools/wifi-qr-code-generator', label: 'Wi-Fi QR Code' },
 ]
 
 const learn = [
