@@ -5,6 +5,8 @@ import { Footer } from '@/components/layout/Footer'
 import { WebSiteSchema, OrganizationSchema } from '@/components/seo/JsonLd'
 import { Analytics } from '@vercel/analytics/next'
 import { themeInitScript } from '@/lib/theme'
+
+const GOOGLE_TAG_ID = 'GTM-5GQSJ2WP'
 import './globals.css'
 
 const inter = Inter({
@@ -81,6 +83,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${inter.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        {/* Google tag (Google Analytics 4), as provided by Google */}
+        <script async src={`https://www.googletagmanager.com/gtm.js?id=${GOOGLE_TAG_ID}`} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());`,
+          }}
+        />
         <WebSiteSchema />
         <OrganizationSchema />
         {/* /favicon.ico comes from src/app/favicon.ico (Next.js adds that link automatically) */}

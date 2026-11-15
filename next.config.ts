@@ -13,6 +13,13 @@ const GOOGLE_ADS = [
   'https://*.adtrafficquality.google',
 ].join(' ')
 
+// Hosts the Google tag (Google Analytics 4) loads from and sends measurements to.
+const GOOGLE_TAG = [
+  'https://*.googletagmanager.com',
+  'https://*.google-analytics.com',
+  'https://*.analytics.google.com',
+].join(' ')
+
 const securityHeaders = [
   // Prevent clickjacking — only allow framing from same origin
   { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
@@ -31,12 +38,12 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} ${GOOGLE_ADS}`,
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} ${GOOGLE_ADS} ${GOOGLE_TAG}`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https:",
       // api.pwnedpasswords.com: the password leak checker sends only a 5-character SHA-1 prefix
-      `connect-src 'self' https://api.pwnedpasswords.com ${GOOGLE_ADS}`,
+      `connect-src 'self' https://api.pwnedpasswords.com ${GOOGLE_ADS} ${GOOGLE_TAG}`,
       `frame-src ${GOOGLE_ADS}`,
       "frame-ancestors 'none'",
       "base-uri 'self'",

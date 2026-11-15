@@ -114,7 +114,10 @@ export default function AboutPage() {
                 <div>
                   <h3 className="text-slate-200 font-semibold text-sm mb-1">Analytics</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">
-                    We use Vercel Analytics to count anonymous page views so we can improve the site. It does not use cookies.
+                    We use Vercel Analytics, which counts anonymous page views without cookies, and Google Analytics, which uses cookies to understand how visitors find and use the site (for example which pages are visited and from which country). Google Analytics never receives the passwords, text or files you enter into the tools. Learn more about{' '}
+                    <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">how Google uses data from sites that use its services</a>
+                    , or opt out with the{' '}
+                    <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">Google Analytics opt-out browser add-on</a>.
                   </p>
                 </div>
               </div>
